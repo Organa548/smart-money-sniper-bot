@@ -8,28 +8,31 @@ import { SignalFilter as SignalFilterType } from "@/types/trading";
 import { tradingAssets } from "@/utils/tradingUtils";
 
 interface SignalFilterProps {
-  onFilterChange: (filter: SignalFilterType) => void;
   currentFilter: SignalFilterType;
+  onFilterChange: (filter: SignalFilterType) => void;
 }
 
 const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilter }) => {
+  // Initialize currentFilter with default empty object if it's undefined
+  const filter = currentFilter || {};
+  
   const handleAssetChange = (value: string) => {
     onFilterChange({
-      ...currentFilter,
+      ...filter,
       asset: value === "all" ? undefined : value
     });
   };
 
   const handleLevelChange = (value: string) => {
     onFilterChange({
-      ...currentFilter,
+      ...filter,
       level: (value === "all" ? undefined : value as 'A' | 'B' | 'C')
     });
   };
 
   const handleResultChange = (value: string) => {
     onFilterChange({
-      ...currentFilter,
+      ...filter,
       result: (value === "all" ? undefined : value as 'WIN' | 'LOSS' | null)
     });
   };
@@ -47,7 +50,7 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
         <div className="space-y-2">
           <Label htmlFor="asset-filter">Ativo</Label>
           <Select 
-            value={currentFilter.asset || "all"} 
+            value={filter.asset || "all"} 
             onValueChange={handleAssetChange}
           >
             <SelectTrigger id="asset-filter">
@@ -67,7 +70,7 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
         <div className="space-y-2">
           <Label htmlFor="level-filter">Nível</Label>
           <Select 
-            value={currentFilter.level || "all"} 
+            value={filter.level || "all"} 
             onValueChange={handleLevelChange}
           >
             <SelectTrigger id="level-filter">
@@ -85,7 +88,7 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
         <div className="space-y-2">
           <Label htmlFor="result-filter">Resultado</Label>
           <Select 
-            value={currentFilter.result || "all"} 
+            value={filter.result || "all"} 
             onValueChange={handleResultChange}
           >
             <SelectTrigger id="result-filter">

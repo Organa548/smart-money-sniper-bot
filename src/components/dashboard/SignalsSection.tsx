@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,7 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <SignalFilter value={filter} onChange={onFilterChange} />
+          <SignalFilter currentFilter={filter} onFilterChange={onFilterChange} />
         </CardContent>
       </Card>
       

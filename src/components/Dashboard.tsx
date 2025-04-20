@@ -10,6 +10,7 @@ import StatusPanel from "./dashboard/StatusPanel";
 import MLRecommendation from "./MLRecommendation";
 import { useDashboard } from "@/hooks/useDashboard";
 import { Button } from "@/components/ui/button";
+import { TradingSettingsType } from "@/components/TradingSettings";
 
 const Dashboard: React.FC = () => {
   const {
@@ -42,6 +43,14 @@ const Dashboard: React.FC = () => {
   const todaySignalsCount = signals.filter(
     s => new Date(s.timestamp).toDateString() === new Date().toDateString()
   ).length;
+
+  // Helper function to handle ML recommendation application
+  const handleApplyRecommendation = (recommendation: Partial<TradingSettingsType>) => {
+    setTradingSettings({
+      ...tradingSettings,
+      ...recommendation
+    });
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-4 space-y-6">
@@ -87,7 +96,7 @@ const Dashboard: React.FC = () => {
           {mlRecommendation && (
             <MLRecommendation 
               recommendation={mlRecommendation} 
-              onApplyRecommendation={setTradingSettings}
+              onApplyRecommendation={handleApplyRecommendation}
             />
           )}
         </div>
