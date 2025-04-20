@@ -57,25 +57,15 @@ export const useDashboard = () => {
 
   const { filter, setFilter, stats, mlRecommendation } = useSignalsState(signals);
 
-  // Ativando sinais reais da Deriv por padrão
+  // Removendo a ativação automática
   useEffect(() => {
-    console.log("Inicializando dashboard - ativando sistemas...");
-    
-    // Ativando imediatamente
-    setUseRealSignals(true);
-    setIsActive(true);
+    console.log("Inicializando dashboard...");
     
     // Testar conexão com o Telegram
     setTimeout(() => {
       console.log("Executando teste do Telegram após inicialização...");
       handleTestTelegram();
     }, 5000);
-    
-    toast({
-      title: "Sistema Ativado",
-      description: "Conexão com a API Deriv iniciada e envio de sinais para o Telegram ativado",
-      variant: "default",
-    });
   }, []);
 
   const { isConnected, connectionError } = useDerivConnection(
