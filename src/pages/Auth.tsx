@@ -1,19 +1,34 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
+import { LogIn, UserPlus } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        navigate('/dashboard');
+      }
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     try {
       if (isLogin) {
@@ -43,6 +58,8 @@ const AuthPage: React.FC = () => {
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,6 +76,7 @@ const AuthPage: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
             className="bg-trading-background text-trading-neutral"
           />
           <Input
@@ -67,16 +85,28 @@ const AuthPage: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
             className="bg-trading-background text-trading-neutral"
           />
-          <Button type="submit" className="w-full bg-trading-highlight hover:bg-trading-highlight/90">
-            {isLogin ? 'Entrar' : 'Cadastrar'}
+          <Button 
+            type="submit" 
+            className="w-full bg-trading-highlight hover:bg-trading-highlight/90"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              'Processando...'
+            ) : isLogin ? (
+              <><LogIn className="mr-2" /> Entrar</>
+            ) : (
+              <><UserPlus className="mr-2" /> Cadastrar</>
+            )}
           </Button>
         </form>
         <div className="text-center">
           <Button 
             variant="link" 
             onClick={() => setIsLogin(!isLogin)}
+            disabled={isLoading}
             className="text-trading-neutral hover:text-trading-highlight"
           >
             {isLogin 
