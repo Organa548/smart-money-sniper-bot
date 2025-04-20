@@ -14,7 +14,9 @@ const defaultTelegramSettings = {
   botToken: "",
   chatId: "",
   sendWins: true,
-  sendLosses: true
+  sendLosses: true,
+  sendResultsAutomatically: true,
+  sendSignalAdvance: true
 };
 
 const defaultTradingSettings: TradingSettingsType = {
