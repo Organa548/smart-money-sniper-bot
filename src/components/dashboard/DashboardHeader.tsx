@@ -20,7 +20,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
       <div className="space-y-2">
         <Logo />
-        <p className="text-trading-neutral">
+        <p className="text-neutral-contrast">
           {operatingNow 
             ? "Horário operacional - Sistema pronto para gerar sinais" 
             : "Fora do horário operacional - Sistema em espera"}
@@ -29,7 +29,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       
       <div className="flex items-center gap-3">
         <div className="text-right hidden md:block">
-          <div className="text-sm text-trading-neutral">Horário Atual (Brasília)</div>
+          <div className="text-sm text-neutral-contrast">Horário Atual (Brasília)</div>
           <div className="text-xl font-mono">
             {currentTime.toLocaleTimeString('pt-BR', { 
               hour: '2-digit', 

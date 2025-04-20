@@ -27,25 +27,25 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
       <h3 className="font-bold mb-2">Status do Bot</h3>
       <div className="space-y-2">
         <div className="flex justify-between">
-          <span className="text-trading-neutral">Status:</span>
+          <span className="text-neutral-contrast">Status:</span>
           <span className={isActive ? 'text-trading-win' : 'text-trading-loss'}>
             {isActive ? 'Ativo' : 'Inativo'}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-trading-neutral">Horário operacional:</span>
+          <span className="text-neutral-contrast">Horário operacional:</span>
           <span className={is24HoursMode ? 'text-trading-win' : operatingNow ? 'text-trading-win' : 'text-trading-loss'}>
             {is24HoursMode ? '24 Horas' : (operatingNow ? 'Sim' : 'Não')}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-trading-neutral">Sinais hoje:</span>
+          <span className="text-neutral-contrast">Sinais hoje:</span>
           <span>{todaySignalsCount}</span>
         </div>
         <div className="flex justify-between items-start">
-          <span className="text-trading-neutral">API Deriv:</span>
+          <span className="text-neutral-contrast">API Deriv:</span>
           <div className="text-right">
-            <div className={useRealSignals ? (isConnected ? 'text-trading-win' : 'text-trading-loss') : 'text-trading-neutral'}>
+            <div className={useRealSignals ? (isConnected ? 'text-trading-win' : 'text-trading-loss') : 'text-neutral-contrast'}>
               {useRealSignals 
                 ? (isConnected ? 'Conectado' : 'Falha na Conexão') 
                 : 'Desativada'}
@@ -58,7 +58,7 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
           </div>
         </div>
         <div className="flex justify-between">
-          <span className="text-trading-neutral">Telegram:</span>
+          <span className="text-neutral-contrast">Telegram:</span>
           <span className={telegramEnabled ? 'text-trading-win' : 'text-trading-loss'}>
             {telegramEnabled ? 'Conectado' : 'Desconectado'}
           </span>
