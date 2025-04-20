@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
 
 interface DashboardHeaderProps {
   isActive: boolean;
@@ -17,8 +18,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   return (
     <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-      <div>
-        <h1 className="text-2xl font-bold">Smart Money Sniper Bot</h1>
+      <div className="space-y-2">
+        <Logo />
         <p className="text-trading-neutral">
           {operatingNow 
             ? "Horário operacional - Sistema pronto para gerar sinais" 

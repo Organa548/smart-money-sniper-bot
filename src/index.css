@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,15 +97,15 @@
   }
 
   body {
-    @apply bg-trading-background text-foreground;
+    @apply bg-trading-background text-white/90;
   }
 
   .candle-win {
-    @apply bg-trading-win text-white;
+    @apply bg-trading-win text-white font-medium;
   }
 
   .candle-loss {
-    @apply bg-trading-loss text-white;
+    @apply bg-trading-loss text-white font-medium;
   }
 
   .score-a {
