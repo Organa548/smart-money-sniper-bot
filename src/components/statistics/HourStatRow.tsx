@@ -30,7 +30,7 @@ const HourStatRow: React.FC<HourStatRowProps> = ({ hour, signals, winRate }) => 
           <div className={`h-full ${progressColor} transition-all`} 
                style={{ transform: `translateX(-${100 - winRate}%)` }} />
         </Progress>
-        <span className="text-sm text-non-applicable font-medium">{winRate.toFixed(1)}%</span>
+        <span className="text-sm text-white font-medium">{winRate.toFixed(1)}%</span>
       </div>
     </div>
   );

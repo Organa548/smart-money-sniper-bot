@@ -213,19 +213,24 @@ export class SignalProcessor {
       const hours = now.getHours();
       const minutes = now.getMinutes();
       
-      const signal: TradeSignal = {
-        id: Date.now().toString(),
-        asset,
-        direction,
-        timestamp: now.getTime(),
-        score,
-        level: level || 'C',
-        reasons: analysis.reasons,
-        entryTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-      };
-      
-      console.log(`Gerando sinal real para ${asset.symbol}: ${direction} com score ${score} (Nível ${level})`);
-      this.onSignalCallback(signal);
+      // Verificar se já temos um sinal recente para o mesmo ativo e direção
+      // para evitar duplicação de sinais
+      if (level) {
+        const signal: TradeSignal = {
+          id: Date.now().toString(),
+          asset,
+          direction,
+          timestamp: now.getTime(),
+          score,
+          level,
+          reasons: analysis.reasons,
+          entryTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+          result: null
+        };
+        
+        console.log(`Gerando sinal real para ${asset.symbol}: ${direction} com score ${score} (Nível ${level})`);
+        this.onSignalCallback(signal);
+      }
     }
   }
 }

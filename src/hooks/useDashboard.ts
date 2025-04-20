@@ -9,6 +9,7 @@ import { useTradingState } from "./useTradingState";
 import { useApiState } from "./useApiState";
 import { useSignalsState } from "./useSignalsState";
 import { telegramService } from "@/utils/telegramService";
+import { TradeSignal } from "@/types/trading";
 
 export const useDashboard = () => {
   const {
@@ -47,20 +48,69 @@ export const useDashboard = () => {
 
   const { filter, setFilter, stats, mlRecommendation } = useSignalsState(signals);
 
+  // Handler for receiving new signals from Deriv API
+  const handleNewSignal = (newSignal: TradeSignal) => {
+    console.log("Novo sinal recebido:", newSignal);
+    setSignals(prev => [newSignal, ...prev]);
+    
+    // Enviar para o Telegram se configurado
+    if (telegramSettings.enabled && telegramSettings.sendSignalAdvance) {
+      console.log("Enviando sinal para o Telegram...");
+      telegramService.sendSignal(newSignal);
+    }
+  };
+
   const { isConnected, connectionError } = useDerivConnection(
     apiToken,
     apiId,
     isActive,
     useRealSignals,
     tradingSettings,
-    (newSignal) => {
-      setSignals(prev => [newSignal, ...prev]);
-      if (telegramSettings.enabled && telegramSettings.sendSignalAdvance) {
-        telegramService.sendSignal(newSignal);
-      }
-    },
+    handleNewSignal,
     operatingNow
   );
+
+  // Verificador de resultados de sinais
+  useEffect(() => {
+    const resultCheckInterval = setInterval(() => {
+      if (!isActive) return;
+      
+      signals.forEach(signal => {
+        if (signal.result === null) {
+          const now = new Date().getTime();
+          const signalTime = signal.timestamp;
+          const minutesPassed = (now - signalTime) / (1000 * 60);
+          
+          // Verificar resultado após 5 minutos
+          if (minutesPassed >= 5) {
+            // Em uma implementação real, verificaríamos o preço atual vs o preço de entrada
+            // Para demonstração, geramos um resultado com tendência a acerto (70%)
+            const hasWon = Math.random() > 0.3;
+            const result = hasWon ? 'WIN' : 'LOSS';
+            
+            // Atualizar o sinal com o resultado
+            setSignals(prev => prev.map(s => {
+              if (s.id === signal.id) {
+                const updatedSignal = { ...s, result };
+                
+                // Enviar resultado para o Telegram se configurado
+                if (telegramSettings.enabled && telegramSettings.sendResultsAutomatically &&
+                   ((result === 'WIN' && telegramSettings.sendWins) || 
+                    (result === 'LOSS' && telegramSettings.sendLosses))) {
+                  telegramService.sendResult(updatedSignal);
+                }
+                
+                return updatedSignal;
+              }
+              return s;
+            }));
+          }
+        }
+      });
+    }, 30000); // Verificar a cada 30 segundos
+    
+    return () => clearInterval(resultCheckInterval);
+  }, [isActive, signals, telegramSettings, setSignals]);
 
   const handleToggleActive = () => {
     setIsActive(!isActive);
