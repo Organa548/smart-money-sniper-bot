@@ -9,6 +9,7 @@ interface StatusPanelProps {
   isConnected?: boolean;
   useRealSignals?: boolean;
   is24HoursMode?: boolean;
+  connectionError?: string | null;
 }
 
 const StatusPanel: React.FC<StatusPanelProps> = ({
@@ -18,7 +19,8 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
   todaySignalsCount,
   isConnected = false,
   useRealSignals = false,
-  is24HoursMode = false
+  is24HoursMode = false,
+  connectionError = null
 }) => {
   return (
     <div className="bg-trading-card p-4 rounded-lg border border-trading-neutral/20">
@@ -40,13 +42,20 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
           <span className="text-trading-neutral">Sinais hoje:</span>
           <span>{todaySignalsCount}</span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-start">
           <span className="text-trading-neutral">API Deriv:</span>
-          <span className={useRealSignals ? (isConnected ? 'text-trading-win' : 'text-trading-loss') : 'text-trading-neutral'}>
-            {useRealSignals 
-              ? (isConnected ? 'Conectado' : 'Falha na Conexão') 
-              : 'Desativada'}
-          </span>
+          <div className="text-right">
+            <div className={useRealSignals ? (isConnected ? 'text-trading-win' : 'text-trading-loss') : 'text-trading-neutral'}>
+              {useRealSignals 
+                ? (isConnected ? 'Conectado' : 'Falha na Conexão') 
+                : 'Desativada'}
+            </div>
+            {useRealSignals && connectionError && !isConnected && (
+              <div className="text-trading-loss text-xs mt-1">
+                {connectionError}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex justify-between">
           <span className="text-trading-neutral">Telegram:</span>

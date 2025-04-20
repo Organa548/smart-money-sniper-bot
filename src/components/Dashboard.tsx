@@ -69,6 +69,7 @@ const Dashboard: React.FC = () => {
             isConnected={isConnected} 
             useRealSignals={useRealSignals}
             is24HoursMode={tradingSettings.is24HoursMode}
+            connectionError={connectionError}
           />
         </div>
       </div>

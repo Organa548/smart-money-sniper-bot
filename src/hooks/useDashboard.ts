@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TradeSignal, SignalFilter, TradingStats } from "@/types/trading";
 import { calculateStats, isWithinOperatingHours } from "@/utils/tradingUtils";
@@ -50,6 +49,7 @@ export const useDashboard = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [useRealSignals, setUseRealSignals] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
 
   // Update current time every second
   useEffect(() => {
@@ -95,12 +95,21 @@ export const useDashboard = () => {
       if (apiToken && isActive && useRealSignals) {
         try {
           console.log("Tentando conectar à API Deriv...");
+          setConnectionAttempts(prev => prev + 1);
+          
+          // Disconnect first to ensure clean connection
+          derivAPI.disconnect();
+          
+          // Small delay to ensure disconnect completes
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           derivAPI.authenticate(apiToken);
           const connected = await derivAPI.connect();
           
           if (connected) {
             console.log("Conexão bem-sucedida com a API Deriv");
             setIsConnected(true);
+            setConnectionAttempts(0);
             // Subscribe to selected assets
             derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
             
@@ -112,11 +121,11 @@ export const useDashboard = () => {
           } else {
             console.error("Falha ao conectar à API Deriv");
             setIsConnected(false);
-            setConnectionError("Falha ao estabelecer conexão com a API");
+            setConnectionError("Falha ao estabelecer conexão com a API. Verifique seu token e conexão com a internet.");
             
             toast({
               title: "Erro de Conexão",
-              description: "Não foi possível conectar à API Deriv. Verifique o token.",
+              description: "Não foi possível conectar à API Deriv. Verifique o token e sua conexão.",
               variant: "destructive",
             });
           }
@@ -146,7 +155,25 @@ export const useDashboard = () => {
     return () => {
       derivAPI.disconnect();
     };
-  }, [apiToken, isActive, useRealSignals, tradingSettings.selectedAssets]);
+  }, [apiToken, isActive, useRealSignals, tradingSettings.selectedAssets, connectionAttempts]);
+
+  // Auto-reconnect logic (if connection fails)
+  useEffect(() => {
+    let reconnectTimer: number | null = null;
+    
+    if (useRealSignals && isActive && !isConnected && apiToken && connectionAttempts < 3) {
+      reconnectTimer = window.setTimeout(() => {
+        console.log(`Tentativa de reconexão ${connectionAttempts + 1}/3`);
+        setConnectionAttempts(prev => prev + 1);
+      }, 5000);
+    }
+    
+    return () => {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+    };
+  }, [useRealSignals, isActive, isConnected, apiToken, connectionAttempts]);
 
   // Update subscriptions when selected assets change
   useEffect(() => {
