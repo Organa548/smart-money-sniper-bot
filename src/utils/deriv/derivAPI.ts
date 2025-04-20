@@ -1,4 +1,3 @@
-
 import { Asset, TradeSignal } from "@/types/trading";
 import { wsManager } from "./websocketManager";
 import { SubscriptionManager } from "./subscriptionManager";
@@ -6,8 +5,8 @@ import { SignalProcessor } from "./signalProcessor";
 import { tradingAssets } from "@/utils/tradingUtils";
 
 class DerivAPI {
-  private apiToken: string = '';
-  private apiId: string = '';
+  private apiToken: string = import.meta.env.VITE_DERIV_API_TOKEN || '';
+  private apiId: string = import.meta.env.VITE_DERIV_API_ID || '';
   private isAuthorized: boolean = false;
   private subscriptionManager: SubscriptionManager;
   private signalProcessor: SignalProcessor;

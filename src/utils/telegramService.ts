@@ -1,4 +1,3 @@
-
 import { TradeSignal } from "@/types/trading";
 
 export interface TelegramSettings {
@@ -144,9 +143,9 @@ export class TelegramService {
 
 // Instância global para ser usada em toda a aplicação
 export const telegramService = new TelegramService({
-  enabled: false,
-  botToken: "",
-  chatId: "",
+  enabled: true,
+  botToken: import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '',
+  chatId: import.meta.env.VITE_TELEGRAM_CHAT_ID || '',
   sendWins: true,
   sendLosses: true,
   sendResultsAutomatically: true,
