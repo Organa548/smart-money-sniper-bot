@@ -8,7 +8,7 @@ import { useTradeSignals } from "./useTradeSignals";
 import { useDerivConnection } from "./useDerivConnection";
 import { toast } from "@/components/ui/use-toast";
 
-// Default settings for telegram
+// Default settings for telegram and trading
 const defaultTelegramSettings = {
   enabled: false,
   botToken: "",
@@ -17,7 +17,6 @@ const defaultTelegramSettings = {
   sendLosses: true
 };
 
-// Default settings for trading
 const defaultTradingSettings: TradingSettingsType = {
   operatingHours: [
     { enabled: true, startHour: 7, endHour: 9 },
