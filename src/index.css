@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -123,5 +122,17 @@
   /* Novo estilo para melhorar contraste */
   .text-neutral-contrast {
     @apply text-white/80 font-medium;
+  }
+
+  /* Novo estilo para textos não aplicáveis ou implicáveis */
+  .text-non-applicable {
+    @apply text-gray-400;
+  }
+}
+
+@layer utilities {
+  /* Adicionar classe para textos não aplicáveis */
+  .text-non-applicable {
+    @apply text-gray-400;
   }
 }
