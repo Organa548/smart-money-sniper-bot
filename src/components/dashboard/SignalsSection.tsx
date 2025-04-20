@@ -1,180 +1,155 @@
 
 import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import SignalsList from "@/components/SignalsList";
 import SignalFilter from "@/components/SignalFilter";
-import { TradeSignal, SignalFilter as SignalFilterType } from "@/types/trading";
-import { downloadCSV } from "@/utils/tradingUtils";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { ExternalLink } from "lucide-react";
+import { SignalFilter as SignalFilterType, TradeSignal } from "@/types/trading";
+import { toast } from "@/components/ui/use-toast";
 
 interface SignalsSectionProps {
   signals: TradeSignal[];
   filter: SignalFilterType;
   onFilterChange: (filter: SignalFilterType) => void;
-  apiToken?: string;
-  setApiToken?: (token: string) => void;
-  apiId?: string;
-  setApiId?: (id: string) => void;
-  useRealSignals?: boolean;
-  setUseRealSignals?: (use: boolean) => void;
-  isConnected?: boolean;
-  connectionError?: string | null;
+  apiToken: string;
+  setApiToken: (token: string) => void;
+  apiId: string;
+  setApiId: (id: string) => void;
+  useRealSignals: boolean;
+  setUseRealSignals: (use: boolean) => void;
+  isConnected: boolean;
+  connectionError: string | null;
+  onExportCsv: () => void;
+  onUpdateSignalResult: (signalId: string, result: 'WIN' | 'LOSS') => void;
 }
 
-const SignalsSection: React.FC<SignalsSectionProps> = ({
-  signals,
-  filter,
+const SignalsSection: React.FC<SignalsSectionProps> = ({ 
+  signals, 
+  filter, 
   onFilterChange,
-  apiToken = "",
+  apiToken,
   setApiToken,
-  apiId = "",
+  apiId,
   setApiId,
-  useRealSignals = false,
+  useRealSignals,
   setUseRealSignals,
-  isConnected = false,
-  connectionError = null
+  isConnected,
+  connectionError,
+  onExportCsv,
+  onUpdateSignalResult
 }) => {
-  const handleExportCSV = () => {
-    downloadCSV(signals);
+  const handleFilterReset = () => {
+    onFilterChange({});
   };
 
-  const handleApiTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (setApiToken) {
-      setApiToken(e.target.value);
+  const handleApiSettingsSave = () => {
+    if (!apiToken || !apiId) {
+      toast({
+        title: "Erro de Configuração",
+        description: "Token API e API ID são obrigatórios",
+        variant: "destructive",
+      });
+      return;
     }
-  };
-
-  const handleApiIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (setApiId) {
-      setApiId(e.target.value);
-    }
-  };
-
-  const handleUseRealSignalsChange = (checked: boolean) => {
-    if (setUseRealSignals) {
-      setUseRealSignals(checked);
-    }
+    
+    toast({
+      title: "Configurações API Salvas",
+      description: "As configurações da API Deriv foram salvas",
+      variant: "default",
+    });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <h2 className="text-xl font-bold">Sinais</h2>
-        <Button 
-          variant="outline" 
-          onClick={handleExportCSV}
-          className="bg-trading-card hover:bg-trading-card/80 border-trading-neutral"
-          disabled={signals.length === 0}
-        >
-          Exportar CSV
-        </Button>
-      </div>
+      <Card className="bg-trading-background border-trading-card">
+        <CardHeader className="px-4 py-3 border-b border-trading-card flex flex-row justify-between items-center">
+          <CardTitle className="text-lg">Filtrar Sinais</CardTitle>
+          <div className="flex space-x-2">
+            <Button onClick={handleFilterReset} variant="outline" size="sm">
+              Limpar Filtros
+            </Button>
+            <Button onClick={onExportCsv} variant="default" size="sm">
+              Exportar CSV
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <SignalFilter value={filter} onChange={onFilterChange} />
+        </CardContent>
+      </Card>
       
-      {/* API Controls */}
-      <div className="p-4 bg-trading-card rounded-lg border border-trading-neutral/20 space-y-4">
-        <h3 className="font-bold">Configurações da API Deriv</h3>
-        
-        {useRealSignals && connectionError && (
-          <Alert variant="destructive" className="mb-4 bg-trading-loss/10 text-trading-loss border-trading-loss/30">
-            <AlertTitle>Erro de Conexão</AlertTitle>
-            <AlertDescription>
-              {connectionError}
-              {connectionError.includes("bloqueio") && (
-                <div className="mt-2">
-                  <p className="text-sm">Este erro pode ocorrer por bloqueios de WebSocket no navegador ao executar em sites de terceiros como o Lovable.</p>
-                  <p className="text-sm mt-1">
-                    <strong>Solução:</strong> Para contornar este problema, utilize o modo de sinais simulados desativando "Usar API Real" abaixo.
-                  </p>
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-          <div>
-            <Label htmlFor="api-id">API ID Deriv</Label>
-            <Input
-              id="api-id"
-              type="text"
-              value={apiId}
-              onChange={handleApiIdChange}
-              placeholder="Digite o App ID da Deriv"
-              className="bg-trading-background border-trading-neutral"
-            />
-            <div className="flex items-center space-x-1 text-xs text-trading-neutral mt-1">
-              <span>Obtenha seu App ID em</span>
-              <a 
-                href="https://app.deriv.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-trading-win hover:underline"
-              >
-                app.deriv.com <ExternalLink className="ml-1 h-3 w-3" />
-              </a>
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="api-token">Token API Deriv</Label>
-            <Input
-              id="api-token"
-              type="password"
-              value={apiToken}
-              onChange={handleApiTokenChange}
-              placeholder="Cole seu token API aqui"
-              className="bg-trading-background border-trading-neutral"
-            />
-            <div className="flex items-center space-x-1 text-xs text-trading-neutral mt-1">
-              <span>Obtenha seu token em</span>
-              <a 
-                href="https://app.deriv.com/account/api-token" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-trading-win hover:underline"
-              >
-                app.deriv.com/account/api-token <ExternalLink className="ml-1 h-3 w-3" />
-              </a>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="use-real-signals" 
-                checked={useRealSignals}
-                onCheckedChange={handleUseRealSignalsChange}
+      <Card className="bg-trading-background border-trading-card">
+        <CardHeader className="px-4 py-3 border-b border-trading-card">
+          <CardTitle className="text-lg">Configuração da API</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2 col-span-1">
+              <label className="text-sm font-medium">API Token</label>
+              <input
+                type="password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                value={apiToken}
+                onChange={(e) => setApiToken(e.target.value)}
+                placeholder="Seu Token da API Deriv"
               />
-              <Label htmlFor="use-real-signals">Usar API Real</Label>
             </div>
-            {useRealSignals && connectionError && (
-              <p className="text-xs text-trading-loss mt-1">
-                Desative esta opção para usar sinais simulados em vez da API real
-              </p>
-            )}
+            
+            <div className="space-y-2 col-span-1">
+              <label className="text-sm font-medium">API ID</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                value={apiId}
+                onChange={(e) => setApiId(e.target.value)}
+                placeholder="ID da Aplicação"
+              />
+            </div>
+            
+            <div className="space-y-2 col-span-1 flex items-end">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="use-real-signals"
+                    checked={useRealSignals}
+                    onChange={(e) => setUseRealSignals(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="use-real-signals" className="text-sm">Sinais Reais</label>
+                </div>
+                
+                <Button 
+                  onClick={handleApiSettingsSave}
+                  className="ml-auto"
+                  disabled={!apiToken || !apiId}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </div>
           </div>
           
-          <div className="flex items-center">
-            <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-trading-win' : 'bg-trading-loss'}`}></div>
-            <span className="ml-2 text-sm">
-              {isConnected ? 'Conectado' : 'Desconectado'}
-            </span>
-          </div>
-        </div>
-      </div>
-      
-      <SignalFilter onFilterChange={onFilterChange} currentFilter={filter} />
+          {connectionError && (
+            <div className="mt-4 p-3 bg-trading-loss/20 border border-trading-loss rounded-md text-sm">
+              <strong>Erro de Conexão:</strong> {connectionError}
+            </div>
+          )}
+          
+          {isConnected && (
+            <div className="mt-4">
+              <Badge className="bg-trading-win">API Conectada</Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
       <SignalsList 
         signals={signals} 
         filter={filter} 
-        title={`Sinais ${filter.level ? `Nível ${filter.level}` : ''} ${filter.asset ? `- ${filter.asset}` : ''}`} 
+        title="Últimos Sinais"
+        onUpdateResult={onUpdateSignalResult}
       />
     </div>
   );

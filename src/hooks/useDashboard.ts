@@ -1,15 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { SignalFilter, TradingStats } from "@/types/trading";
-import { calculateStats, isWithinOperatingHours } from "@/utils/tradingUtils";
+import { SignalFilter, TradingStats, TradeSignal, MachineLearningRecommendation } from "@/types/trading";
+import { calculateStats, isWithinOperatingHours, downloadCSV } from "@/utils/tradingUtils";
 import { TradingSettingsType } from "@/components/TradingSettings";
 import { tradingAssets } from "@/utils/tradingUtils";
 import { useTradeSignals } from "./useTradeSignals";
 import { useDerivConnection } from "./useDerivConnection";
 import { toast } from "@/components/ui/use-toast";
+import { telegramService, TelegramSettings } from "@/utils/telegramService";
+import { mlAnalyzer } from "@/utils/machineLearning";
 
 // Default settings for telegram and trading
-const defaultTelegramSettings = {
+const defaultTelegramSettings: TelegramSettings = {
   enabled: false,
   botToken: "",
   chatId: "",
@@ -49,6 +51,7 @@ export const useDashboard = () => {
   const [apiToken, setApiToken] = useState<string>('');
   const [apiId, setApiId] = useState<string>('');
   const [useRealSignals, setUseRealSignals] = useState(false);
+  const [mlRecommendation, setMlRecommendation] = useState<MachineLearningRecommendation | null>(null);
 
   // Update current time every second
   useEffect(() => {
@@ -58,6 +61,11 @@ export const useDashboard = () => {
     
     return () => clearInterval(timer);
   }, []);
+
+  // Update Telegram service when settings change
+  useEffect(() => {
+    telegramService.updateSettings(telegramSettings);
+  }, [telegramSettings]);
 
   // Check if current time is within operating hours or 24-hour mode is enabled
   const operatingNow = tradingSettings.is24HoursMode || isWithinOperatingHours(tradingSettings.operatingHours);
@@ -76,7 +84,16 @@ export const useDashboard = () => {
     isActive,
     useRealSignals,
     tradingSettings,
-    (newSignal) => setSignals(prev => [newSignal, ...prev]),
+    (newSignal) => {
+      // Adicionar o novo sinal à lista
+      setSignals(prev => [newSignal, ...prev]);
+      
+      // Se o Telegram estiver habilitado e a opção de envio antecipado também,
+      // enviamos o sinal imediatamente
+      if (telegramSettings.enabled && telegramSettings.sendSignalAdvance) {
+        telegramService.sendSignal(newSignal);
+      }
+    },
     operatingNow
   );
 
@@ -84,7 +101,50 @@ export const useDashboard = () => {
   useEffect(() => {
     const newStats = calculateStats(signals);
     setStats(newStats);
+    
+    // Executar análise de ML quando tivermos sinais suficientes
+    const recommendation = mlAnalyzer.analyzeSignals(signals);
+    if (recommendation) {
+      setMlRecommendation(recommendation);
+    }
   }, [signals]);
+
+  // Exportar para CSV
+  const handleExportCsv = () => {
+    downloadCSV(signals);
+    toast({
+      title: "Exportação Concluída",
+      description: `${signals.length} sinais exportados para CSV`,
+      variant: "default",
+    });
+  };
+
+  // Atualizar resultados dos sinais
+  const handleUpdateSignalResult = (signalId: string, result: 'WIN' | 'LOSS') => {
+    setSignals(prev => prev.map(signal => {
+      if (signal.id === signalId) {
+        const updatedSignal = { ...signal, result };
+        
+        // Se o Telegram estiver habilitado e a opção de envio automático de resultados estiver ativa,
+        // enviamos o resultado
+        if (telegramSettings.enabled && 
+            telegramSettings.sendResultsAutomatically && 
+            ((result === 'WIN' && telegramSettings.sendWins) || 
+             (result === 'LOSS' && telegramSettings.sendLosses))) {
+          telegramService.sendResult(updatedSignal);
+        }
+        
+        return updatedSignal;
+      }
+      return signal;
+    }));
+    
+    toast({
+      title: "Resultado Atualizado",
+      description: `Sinal marcado como ${result}`,
+      variant: result === 'WIN' ? "default" : "destructive",
+    });
+  };
 
   const handleToggleActive = () => {
     setIsActive(!isActive);
@@ -106,13 +166,45 @@ export const useDashboard = () => {
     }
   };
 
+  const handleSaveTelegramSettings = (newSettings: TelegramSettings) => {
+    setTelegramSettings(newSettings);
+    
+    if (newSettings.enabled && newSettings.botToken && newSettings.chatId) {
+      telegramService.updateSettings(newSettings);
+      
+      toast({
+        title: "Configurações do Telegram Salvas",
+        description: "As configurações do Telegram foram atualizadas",
+        variant: "default",
+      });
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    const success = await telegramService.sendTestMessage();
+    
+    if (success) {
+      toast({
+        title: "Teste Bem-Sucedido",
+        description: "Mensagem de teste enviada com sucesso para o Telegram",
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Falha no Teste",
+        description: "Não foi possível enviar a mensagem de teste. Verifique as configurações.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     signals,
     filter,
     setFilter,
     stats,
     telegramSettings,
-    setTelegramSettings,
+    setTelegramSettings: handleSaveTelegramSettings,
     tradingSettings,
     setTradingSettings,
     isActive,
@@ -126,6 +218,10 @@ export const useDashboard = () => {
     isConnected,
     useRealSignals,
     setUseRealSignals,
-    connectionError
+    connectionError,
+    handleExportCsv,
+    handleUpdateSignalResult,
+    handleTestTelegram,
+    mlRecommendation
   };
 };

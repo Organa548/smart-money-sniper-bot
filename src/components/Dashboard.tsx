@@ -7,7 +7,9 @@ import TradingSettings from "@/components/TradingSettings";
 import DashboardHeader from "./dashboard/DashboardHeader";
 import SignalsSection from "./dashboard/SignalsSection";
 import StatusPanel from "./dashboard/StatusPanel";
+import MLRecommendation from "./MLRecommendation";
 import { useDashboard } from "@/hooks/useDashboard";
+import { Button } from "@/components/ui/button";
 
 const Dashboard: React.FC = () => {
   const {
@@ -30,7 +32,11 @@ const Dashboard: React.FC = () => {
     isConnected,
     useRealSignals,
     setUseRealSignals,
-    connectionError
+    connectionError,
+    handleExportCsv,
+    handleUpdateSignalResult,
+    handleTestTelegram,
+    mlRecommendation
   } = useDashboard();
 
   const todaySignalsCount = signals.filter(
@@ -61,6 +67,8 @@ const Dashboard: React.FC = () => {
             setUseRealSignals={setUseRealSignals}
             isConnected={isConnected}
             connectionError={connectionError}
+            onExportCsv={handleExportCsv}
+            onUpdateSignalResult={handleUpdateSignalResult}
           />
         </div>
         
@@ -76,6 +84,12 @@ const Dashboard: React.FC = () => {
             is24HoursMode={tradingSettings.is24HoursMode}
             connectionError={connectionError}
           />
+          {mlRecommendation && (
+            <MLRecommendation 
+              recommendation={mlRecommendation} 
+              onApplyRecommendation={setTradingSettings}
+            />
+          )}
         </div>
       </div>
       
@@ -96,6 +110,7 @@ const Dashboard: React.FC = () => {
           <TelegramConfig 
             onSave={setTelegramSettings}
             currentSettings={telegramSettings}
+            onTest={handleTestTelegram}
           />
         </TabsContent>
       </Tabs>

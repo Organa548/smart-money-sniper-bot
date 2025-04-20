@@ -47,6 +47,42 @@ export const useTradeSignals = (
     };
   }, [isActive, operatingNow, tradingSettings, telegramEnabled, useRealSignals]);
 
+  // Verifica resultados dos sinais periódicamente
+  useEffect(() => {
+    const resultCheckInterval = window.setInterval(() => {
+      if (!isActive) return;
+      
+      // Verifica sinais pendentes que precisam ter resultado atualizado
+      const pendingSignals = signals.filter(signal => signal.result === null);
+      
+      pendingSignals.forEach(signal => {
+        // Se o sinal tem mais de 5 minutos, vamos determinar o resultado
+        const now = new Date().getTime();
+        const signalTime = signal.timestamp;
+        const minutesPassed = (now - signalTime) / (1000 * 60);
+        
+        if (minutesPassed >= 5) {
+          // Para mock, geramos resultado aleatório (70% win, 30% loss)
+          // Em implementação real, verificaríamos o candle de fechamento
+          const result = Math.random() > 0.3 ? 'WIN' : 'LOSS';
+          
+          setSignals(prev => prev.map(s => {
+            if (s.id === signal.id) {
+              return { ...s, result };
+            }
+            return s;
+          }));
+          
+          console.log(`Atualizando resultado do sinal ${signal.id} para ${result}`);
+        }
+      });
+    }, 30000); // Verifica a cada 30 segundos
+    
+    return () => {
+      clearInterval(resultCheckInterval);
+    };
+  }, [isActive, signals]);
+
   return {
     signals,
     setSignals

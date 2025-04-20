@@ -4,14 +4,21 @@ import { TradeSignal, SignalFilter } from "@/types/trading";
 import { SignalCard } from "@/components/SignalCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface SignalsListProps {
   signals: TradeSignal[];
   filter?: SignalFilter;
   title?: string;
+  onUpdateResult?: (signalId: string, result: 'WIN' | 'LOSS') => void;
 }
 
-const SignalsList: React.FC<SignalsListProps> = ({ signals, filter, title = "Últimos Sinais" }) => {
+const SignalsList: React.FC<SignalsListProps> = ({ 
+  signals, 
+  filter, 
+  title = "Últimos Sinais",
+  onUpdateResult 
+}) => {
   // Apply filters
   const filteredSignals = React.useMemo(() => {
     if (!filter) return signals;
@@ -67,7 +74,32 @@ const SignalsList: React.FC<SignalsListProps> = ({ signals, filter, title = "Úl
           <div className="p-4">
             {filteredSignals.length > 0 ? (
               filteredSignals.map(signal => (
-                <SignalCard key={signal.id} signal={signal} />
+                <div key={signal.id} className="mb-4">
+                  <SignalCard signal={signal} />
+                  
+                  {/* Botões de resultado se o callback onUpdateResult foi fornecido e o sinal ainda não tem resultado */}
+                  {onUpdateResult && signal.result === null && (
+                    <div className="flex justify-end mt-2 space-x-2">
+                      <Button 
+                        size="sm"
+                        variant="outline" 
+                        className="bg-trading-win hover:bg-trading-win/80 text-white"
+                        onClick={() => onUpdateResult(signal.id, 'WIN')}
+                      >
+                        Marcar como WIN
+                      </Button>
+                      
+                      <Button 
+                        size="sm"
+                        variant="outline" 
+                        className="bg-trading-loss hover:bg-trading-loss/80 text-white"
+                        onClick={() => onUpdateResult(signal.id, 'LOSS')}
+                      >
+                        Marcar como LOSS
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))
             ) : (
               <div className="text-center py-8 text-trading-neutral">

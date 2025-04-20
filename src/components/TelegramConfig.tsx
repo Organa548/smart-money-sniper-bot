@@ -6,23 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { TelegramSettings } from "@/utils/telegramService";
 
 interface TelegramConfigProps {
   onSave: (config: TelegramSettings) => void;
   currentSettings: TelegramSettings;
+  onTest: () => Promise<void>;
 }
 
-interface TelegramSettings {
-  enabled: boolean;
-  botToken: string;
-  chatId: string;
-  sendWins: boolean;
-  sendLosses: boolean;
-  sendResultsAutomatically: boolean;
-  sendSignalAdvance: boolean;
-}
-
-const TelegramConfig: React.FC<TelegramConfigProps> = ({ onSave, currentSettings }) => {
+const TelegramConfig: React.FC<TelegramConfigProps> = ({ onSave, currentSettings, onTest }) => {
   const [settings, setSettings] = useState<TelegramSettings>({
     ...currentSettings,
     sendResultsAutomatically: currentSettings.sendResultsAutomatically ?? true,
@@ -41,15 +33,16 @@ const TelegramConfig: React.FC<TelegramConfigProps> = ({ onSave, currentSettings
     onSave(settings);
   };
 
-  const handleTest = () => {
+  const handleTest = async () => {
     setIsTesting(true);
     
-    // Simulate sending a test message
-    setTimeout(() => {
+    try {
+      await onTest();
+    } catch (error) {
+      console.error("Erro ao testar conexão Telegram:", error);
+    } finally {
       setIsTesting(false);
-      // In a real implementation, this would actually send a test message and show the result
-      alert('Mensagem de teste enviada com sucesso!');
-    }, 1500);
+    }
   };
 
   return (
