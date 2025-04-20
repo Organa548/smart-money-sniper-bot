@@ -5,6 +5,7 @@ class WebSocketManager {
   private pingInterval: number | null = null;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private lastError: string | null = null;
 
   public connect(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -23,12 +24,14 @@ class WebSocketManager {
       console.log("Iniciando nova conexão WebSocket com a Deriv");
       
       try {
+        // Tentando conexão com protocolo wss (WebSocket Secure)
         this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
         
         this.connectionTimeout = window.setTimeout(() => {
           console.error("Timeout de conexão atingido");
           if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
             this.ws.close();
+            this.lastError = "Timeout de conexão";
             resolve(false);
           }
         }, 10000);
@@ -42,11 +45,14 @@ class WebSocketManager {
           
           this.startPingInterval();
           this.reconnectAttempts = 0;
+          this.lastError = null;
           resolve(true);
         };
         
         this.ws.onerror = (error) => {
           console.error('Erro na conexão WebSocket:', error);
+          this.lastError = "Bloqueio de conexão pelo navegador";
+          
           if (this.connectionTimeout) {
             clearTimeout(this.connectionTimeout);
             this.connectionTimeout = null;
@@ -55,6 +61,7 @@ class WebSocketManager {
         };
       } catch (error) {
         console.error("Erro ao criar WebSocket:", error);
+        this.lastError = error instanceof Error ? error.message : "Erro desconhecido";
         resolve(false);
       }
     });
@@ -126,6 +133,10 @@ class WebSocketManager {
 
   public incrementReconnectAttempts(): void {
     this.reconnectAttempts++;
+  }
+  
+  public getLastError(): string | null {
+    return this.lastError;
   }
 }
 

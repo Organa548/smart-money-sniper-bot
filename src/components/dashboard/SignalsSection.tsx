@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ExternalLink } from "lucide-react";
 
 interface SignalsSectionProps {
   signals: TradeSignal[];
@@ -80,7 +81,17 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
         {useRealSignals && connectionError && (
           <Alert variant="destructive" className="mb-4 bg-trading-loss/10 text-trading-loss border-trading-loss/30">
             <AlertTitle>Erro de Conexão</AlertTitle>
-            <AlertDescription>{connectionError}</AlertDescription>
+            <AlertDescription>
+              {connectionError}
+              {connectionError.includes("bloqueio") && (
+                <div className="mt-2">
+                  <p className="text-sm">Este erro pode ocorrer por bloqueios de WebSocket no navegador ao executar em sites de terceiros como o Lovable.</p>
+                  <p className="text-sm mt-1">
+                    <strong>Solução:</strong> Para contornar este problema, utilize o modo de sinais simulados desativando "Usar API Real" abaixo.
+                  </p>
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         )}
         
@@ -95,9 +106,17 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
               placeholder="Digite o App ID da Deriv"
               className="bg-trading-background border-trading-neutral"
             />
-            <p className="text-xs text-trading-neutral mt-1">
-              Obtenha seu App ID em app.deriv.com &gt; Sinta-se livre para criar
-            </p>
+            <div className="flex items-center space-x-1 text-xs text-trading-neutral mt-1">
+              <span>Obtenha seu App ID em</span>
+              <a 
+                href="https://app.deriv.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-trading-win hover:underline"
+              >
+                app.deriv.com <ExternalLink className="ml-1 h-3 w-3" />
+              </a>
+            </div>
           </div>
           
           <div>
@@ -110,9 +129,17 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
               placeholder="Cole seu token API aqui"
               className="bg-trading-background border-trading-neutral"
             />
-            <p className="text-xs text-trading-neutral mt-1">
-              Obtenha seu token em app.deriv.com &gt; Configurações &gt; API Token
-            </p>
+            <div className="flex items-center space-x-1 text-xs text-trading-neutral mt-1">
+              <span>Obtenha seu token em</span>
+              <a 
+                href="https://app.deriv.com/account/api-token" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-trading-win hover:underline"
+              >
+                app.deriv.com/account/api-token <ExternalLink className="ml-1 h-3 w-3" />
+              </a>
+            </div>
           </div>
         </div>
         
@@ -126,6 +153,11 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
               />
               <Label htmlFor="use-real-signals">Usar API Real</Label>
             </div>
+            {useRealSignals && connectionError && (
+              <p className="text-xs text-trading-loss mt-1">
+                Desative esta opção para usar sinais simulados em vez da API real
+              </p>
+            )}
           </div>
           
           <div className="flex items-center">

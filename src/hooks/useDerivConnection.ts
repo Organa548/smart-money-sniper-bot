@@ -4,6 +4,7 @@ import { derivAPI } from "@/utils/deriv";
 import { toast } from "@/components/ui/use-toast";
 import { TradeSignal } from "@/types/trading";
 import { TradingSettingsType } from "@/components/TradingSettings";
+import { wsManager } from "@/utils/deriv/websocketManager";
 
 export const useDerivConnection = (
   apiToken: string,
@@ -48,11 +49,17 @@ export const useDerivConnection = (
           } else {
             console.error("Falha ao conectar à API Deriv");
             setIsConnected(false);
-            setConnectionError("Falha ao estabelecer conexão com a API. Verifique seu token e conexão com a internet.");
+            
+            const wsError = wsManager.getLastError();
+            const errorMsg = wsError 
+              ? `Erro de conexão: ${wsError}. Pode ser um bloqueio do navegador.`
+              : "Falha ao estabelecer conexão com a API. Verifique seu token, API ID e conexão com a internet.";
+            
+            setConnectionError(errorMsg);
             
             toast({
               title: "Erro de Conexão",
-              description: "Não foi possível conectar à API Deriv. Verifique o token, API ID e sua conexão com a internet.",
+              description: "Não foi possível conectar à API Deriv. Esse erro pode ser causado por bloqueios do navegador para WebSockets.",
               variant: "destructive",
             });
           }
