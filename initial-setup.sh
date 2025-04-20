@@ -22,3 +22,4 @@ git remote add origin <REPOSITORY_URL>
 git push -u origin main
 
 echo "Repositório preparado e enviado para o GitHub!"
+
