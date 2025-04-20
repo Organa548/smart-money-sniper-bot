@@ -1,15 +1,12 @@
 
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Statistics from "@/components/Statistics";
-import TelegramConfig from "@/components/TelegramConfig";
 import TradingSettings from "@/components/TradingSettings";
 import DashboardHeader from "./dashboard/DashboardHeader";
 import SignalsSection from "./dashboard/SignalsSection";
 import StatusPanel from "./dashboard/StatusPanel";
 import MLRecommendation from "./MLRecommendation";
 import { useDashboard } from "@/hooks/useDashboard";
-import { Button } from "@/components/ui/button";
 import { TradingSettingsType } from "@/components/TradingSettings";
 
 const Dashboard: React.FC = () => {
@@ -18,25 +15,16 @@ const Dashboard: React.FC = () => {
     filter,
     setFilter,
     stats,
-    telegramSettings,
-    setTelegramSettings,
     tradingSettings,
     setTradingSettings,
     isActive,
     currentTime,
     operatingNow,
     handleToggleActive,
-    apiToken,
-    setApiToken,
-    apiId,
-    setApiId,
     isConnected,
-    useRealSignals,
-    setUseRealSignals,
     connectionError,
     handleExportCsv,
     handleUpdateSignalResult,
-    handleTestTelegram,
     mlRecommendation
   } = useDashboard();
 
@@ -59,7 +47,7 @@ const Dashboard: React.FC = () => {
         operatingNow={operatingNow}
         currentTime={currentTime}
         onToggleActive={handleToggleActive}
-        connectedToAPI={isConnected && useRealSignals}
+        connectedToAPI={isConnected}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -68,12 +56,6 @@ const Dashboard: React.FC = () => {
             signals={signals}
             filter={filter}
             onFilterChange={setFilter}
-            apiToken={apiToken}
-            setApiToken={setApiToken}
-            apiId={apiId}
-            setApiId={setApiId}
-            useRealSignals={useRealSignals}
-            setUseRealSignals={setUseRealSignals}
             isConnected={isConnected}
             connectionError={connectionError}
             onExportCsv={handleExportCsv}
@@ -86,10 +68,9 @@ const Dashboard: React.FC = () => {
           <StatusPanel
             isActive={isActive}
             operatingNow={operatingNow}
-            telegramEnabled={telegramSettings.enabled}
+            telegramEnabled={true}
             todaySignalsCount={todaySignalsCount}
-            isConnected={isConnected} 
-            useRealSignals={useRealSignals}
+            isConnected={isConnected}
             is24HoursMode={tradingSettings.is24HoursMode}
             connectionError={connectionError}
           />
@@ -102,27 +83,10 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-trading-card">
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
-          <TabsTrigger value="telegram">Telegram</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="settings" className="mt-4">
-          <TradingSettings 
-            onSave={setTradingSettings}
-            currentSettings={tradingSettings}
-          />
-        </TabsContent>
-        
-        <TabsContent value="telegram" className="mt-4">
-          <TelegramConfig 
-            onSave={setTelegramSettings}
-            currentSettings={telegramSettings}
-            onTest={handleTestTelegram}
-          />
-        </TabsContent>
-      </Tabs>
+      <TradingSettings 
+        onSave={setTradingSettings}
+        currentSettings={tradingSettings}
+      />
     </div>
   );
 };
