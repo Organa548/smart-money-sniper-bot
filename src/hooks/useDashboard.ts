@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { downloadCSV } from "@/utils/tradingUtils";
+import { downloadCSV, isWithinOperatingHours } from "@/utils/tradingUtils";
 import { toast } from "@/components/ui/use-toast";
 import { useTradeSignals } from "./useTradeSignals";
 import { useDerivConnection } from "./useDerivConnection";
