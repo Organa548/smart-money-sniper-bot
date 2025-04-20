@@ -19,6 +19,15 @@ export default {
 		},
 		extend: {
 			colors: {
+				trading: {
+					background: '#121722',
+					card: '#1E2130',
+					win: '#00C176',
+					loss: '#FF3B69',
+					neutral: '#8A94A6',
+					highlight: '#3F7AEE',
+				},
+			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

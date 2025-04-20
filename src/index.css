@@ -96,6 +96,26 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-trading-background text-foreground;
+  }
+
+  .candle-win {
+    @apply bg-trading-win text-white;
+  }
+
+  .candle-loss {
+    @apply bg-trading-loss text-white;
+  }
+
+  .score-a {
+    @apply bg-trading-win/20 text-trading-win font-bold;
+  }
+
+  .score-b {
+    @apply bg-trading-highlight/20 text-trading-highlight font-bold;
+  }
+
+  .score-c {
+    @apply bg-trading-neutral/20 text-trading-neutral font-bold;
   }
 }
