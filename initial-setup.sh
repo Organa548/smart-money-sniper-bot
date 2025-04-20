@@ -14,10 +14,11 @@ git add .
 # Fazer o primeiro commit
 git commit -m "Initial commit: Smart Money Sniper Bot project setup"
 
-# Adicionar o remote do repositório (substitua <REPOSITORY_URL> pela URL do seu repositório GitHub)
-# git remote add origin <REPOSITORY_URL>
+# IMPORTANTE: Substitua <REPOSITORY_URL> pela URL do seu repositório GitHub
+# Exemplo: https://github.com/seu-usuario/smart-money-sniper-bot.git
+git remote add origin <REPOSITORY_URL>
 
 # Fazer push para o repositório remoto
-# git push -u origin main
+git push -u origin main
 
-echo "Repositório preparado para commit inicial!"
+echo "Repositório preparado e enviado para o GitHub!"
