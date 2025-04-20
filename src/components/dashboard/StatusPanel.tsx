@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Card } from "@/components/ui/card";
 
 interface StatusPanelProps {
   isActive: boolean;
@@ -9,6 +8,7 @@ interface StatusPanelProps {
   todaySignalsCount: number;
   isConnected?: boolean;
   useRealSignals?: boolean;
+  is24HoursMode?: boolean;
 }
 
 const StatusPanel: React.FC<StatusPanelProps> = ({
@@ -17,7 +17,8 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
   telegramEnabled,
   todaySignalsCount,
   isConnected = false,
-  useRealSignals = false
+  useRealSignals = false,
+  is24HoursMode = false
 }) => {
   return (
     <div className="bg-trading-card p-4 rounded-lg border border-trading-neutral/20">
@@ -32,7 +33,7 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
         <div className="flex justify-between">
           <span className="text-trading-neutral">Horário operacional:</span>
           <span className={operatingNow ? 'text-trading-win' : 'text-trading-loss'}>
-            {operatingNow ? 'Sim' : 'Não'}
+            {is24HoursMode ? '24 Horas' : (operatingNow ? 'Sim' : 'Não')}
           </span>
         </div>
         <div className="flex justify-between">

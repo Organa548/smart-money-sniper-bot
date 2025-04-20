@@ -18,6 +18,7 @@ export interface TradingSettingsType {
   minScoreForSignal: number;
   selectedAssets: string[];
   autoTrade: boolean;
+  is24HoursMode: boolean;
 }
 
 interface TradingSettingsProps {
@@ -32,6 +33,7 @@ const TradingSettings: React.FC<TradingSettingsProps> = ({ onSave, currentSettin
     handleMinScoreChange,
     handleAssetToggle,
     handleAutoTradeToggle,
+    handleToggle24Hours,
     handleSave
   } = useTradingSettings({ onSave, currentSettings });
 
@@ -44,6 +46,8 @@ const TradingSettings: React.FC<TradingSettingsProps> = ({ onSave, currentSettin
         <OperatingHours 
           operatingHours={settings.operatingHours}
           onOperatingHoursChange={handleOperatingHoursChange}
+          is24HoursMode={settings.is24HoursMode}
+          onToggle24Hours={handleToggle24Hours}
         />
 
         <Separator />

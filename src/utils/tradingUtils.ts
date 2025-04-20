@@ -1,4 +1,3 @@
-
 import { TradeSignal, TradingStats, Asset, OperatingHours } from "@/types/trading";
 
 // Available trading assets
@@ -20,10 +19,18 @@ export const operatingHours: OperatingHours[] = [
 ];
 
 // Check if current time is within operating hours
-export const isWithinOperatingHours = (): boolean => {
+export const isWithinOperatingHours = (customOperatingHours?: { enabled: boolean; startHour: number; endHour: number }[]): boolean => {
   const now = new Date();
   const currentHour = now.getHours();
   
+  // Use custom operating hours if provided, otherwise use default
+  if (customOperatingHours) {
+    return customOperatingHours
+      .filter(period => period.enabled)
+      .some(period => currentHour >= period.startHour && currentHour < period.endHour);
+  }
+  
+  // Default behavior with predefined operating hours
   return operatingHours.some(period => 
     currentHour >= period.start && currentHour < period.end
   );

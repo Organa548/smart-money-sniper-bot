@@ -8,7 +8,10 @@ interface UseTradingSettingsProps {
 }
 
 export const useTradingSettings = ({ onSave, currentSettings }: UseTradingSettingsProps) => {
-  const [settings, setSettings] = useState<TradingSettingsType>(currentSettings);
+  const [settings, setSettings] = useState<TradingSettingsType>({
+    ...currentSettings,
+    is24HoursMode: currentSettings.is24HoursMode || false
+  });
 
   const handleOperatingHoursChange = (index: number, field: keyof typeof settings.operatingHours[0], value: any) => {
     const updatedHours = [...settings.operatingHours];
@@ -48,6 +51,13 @@ export const useTradingSettings = ({ onSave, currentSettings }: UseTradingSettin
     });
   };
 
+  const handleToggle24Hours = (checked: boolean) => {
+    setSettings({
+      ...settings,
+      is24HoursMode: checked
+    });
+  };
+
   const handleSave = () => {
     onSave(settings);
   };
@@ -58,6 +68,7 @@ export const useTradingSettings = ({ onSave, currentSettings }: UseTradingSettin
     handleMinScoreChange,
     handleAssetToggle,
     handleAutoTradeToggle,
+    handleToggle24Hours,
     handleSave
   };
 };

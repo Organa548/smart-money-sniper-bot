@@ -66,6 +66,7 @@ const Dashboard: React.FC = () => {
             todaySignalsCount={todaySignalsCount}
             isConnected={isConnected} 
             useRealSignals={useRealSignals}
+            is24HoursMode={tradingSettings.is24HoursMode}
           />
         </div>
       </div>

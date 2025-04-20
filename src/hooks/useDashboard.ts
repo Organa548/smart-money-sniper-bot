@@ -26,7 +26,8 @@ const defaultTradingSettings: TradingSettingsType = {
   ],
   minScoreForSignal: 4,
   selectedAssets: tradingAssets.map(asset => asset.id),
-  autoTrade: false
+  autoTrade: false,
+  is24HoursMode: false
 };
 
 export const useDashboard = () => {
@@ -58,8 +59,8 @@ export const useDashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Check if current time is within operating hours
-  const operatingNow = isWithinOperatingHours();
+  // Check if current time is within operating hours or 24-hour mode is enabled
+  const operatingNow = tradingSettings.is24HoursMode || isWithinOperatingHours(tradingSettings.operatingHours);
 
   // Set up Deriv signal callback
   useEffect(() => {
