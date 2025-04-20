@@ -120,7 +120,7 @@
     @apply bg-trading-neutral/20 text-trading-neutral font-bold;
   }
 
-  // Novo estilo para melhorar contraste
+  /* Novo estilo para melhorar contraste */
   .text-neutral-contrast {
     @apply text-white/80 font-medium;
   }
