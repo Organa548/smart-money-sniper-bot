@@ -86,7 +86,7 @@ export const useDashboard = () => {
             // Em uma implementação real, verificaríamos o preço atual vs o preço de entrada
             // Para demonstração, geramos um resultado com tendência a acerto (70%)
             const hasWon = Math.random() > 0.3;
-            const result = hasWon ? 'WIN' : 'LOSS';
+            const result = hasWon ? 'WIN' as const : 'LOSS' as const;
             
             // Atualizar o sinal com o resultado
             setSignals(prev => prev.map(s => {

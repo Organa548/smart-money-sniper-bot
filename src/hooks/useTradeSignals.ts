@@ -64,7 +64,7 @@ export const useTradeSignals = (
         if (minutesPassed >= 5) {
           // Para mock, geramos resultado aleatório (70% win, 30% loss)
           // Em implementação real, verificaríamos o candle de fechamento
-          const result = Math.random() > 0.3 ? 'WIN' : 'LOSS';
+          const result = Math.random() > 0.3 ? 'WIN' as const : 'LOSS' as const;
           
           setSignals(prev => prev.map(s => {
             if (s.id === signal.id) {
