@@ -4,7 +4,7 @@ import { calculateStats, isWithinOperatingHours } from "@/utils/tradingUtils";
 import { TradingSettingsType } from "@/components/TradingSettings";
 import { generateMockSignal } from "@/utils/smartMoneyAnalysis";
 import { tradingAssets } from "@/utils/tradingUtils";
-import { derivAPI } from "@/utils/derivAPI";
+import { derivAPI } from "@/utils/deriv";
 import { toast } from "@/components/ui/use-toast";
 
 // Default settings for telegram
@@ -125,7 +125,7 @@ export const useDashboard = () => {
             
             toast({
               title: "Erro de Conexão",
-              description: "Não foi possível conectar à API Deriv. Verifique o token e sua conexão.",
+              description: "Não foi possível conectar à API Deriv. Verifique o token e sua conexão com a internet.",
               variant: "destructive",
             });
           }
