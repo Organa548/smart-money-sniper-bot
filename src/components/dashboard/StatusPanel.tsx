@@ -32,7 +32,7 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
         </div>
         <div className="flex justify-between">
           <span className="text-trading-neutral">Horário operacional:</span>
-          <span className={operatingNow ? 'text-trading-win' : 'text-trading-loss'}>
+          <span className={is24HoursMode ? 'text-trading-win' : operatingNow ? 'text-trading-win' : 'text-trading-loss'}>
             {is24HoursMode ? '24 Horas' : (operatingNow ? 'Sim' : 'Não')}
           </span>
         </div>
@@ -42,9 +42,9 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
         </div>
         <div className="flex justify-between">
           <span className="text-trading-neutral">API Deriv:</span>
-          <span className={useRealSignals && isConnected ? 'text-trading-win' : 'text-trading-loss'}>
+          <span className={useRealSignals ? (isConnected ? 'text-trading-win' : 'text-trading-loss') : 'text-trading-neutral'}>
             {useRealSignals 
-              ? (isConnected ? 'Conectado' : 'Desconectado') 
+              ? (isConnected ? 'Conectado' : 'Falha na Conexão') 
               : 'Desativada'}
           </span>
         </div>

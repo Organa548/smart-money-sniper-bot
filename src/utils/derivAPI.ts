@@ -14,6 +14,7 @@ class DerivAPI {
   private maxReconnectAttempts: number = 5;
   private onSignalCallback: ((signal: TradeSignal) => void) | null = null;
   private activeAssets: string[] = [];
+  private connectionTimeout: number | null = null;
   
   constructor() {
     this.connect = this.connect.bind(this);
@@ -30,47 +31,93 @@ class DerivAPI {
   public connect(): Promise<boolean> {
     return new Promise((resolve) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        console.log("WebSocket já está conectado");
         resolve(true);
         return;
       }
       
-      this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
+      // Limpar conexão anterior se existir
+      if (this.ws) {
+        this.ws.onclose = null; // Desabilitar callback de fechamento para evitar reconexão automática
+        this.ws.close();
+        this.ws = null;
+      }
       
-      this.ws.onopen = () => {
-        console.log('Conexão WebSocket estabelecida com a Deriv');
-        this.startPingInterval();
-        this.reconnectAttempts = 0;
+      console.log("Iniciando nova conexão WebSocket com a Deriv");
+      
+      try {
+        this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
         
-        if (this.apiToken) {
-          this.authenticate(this.apiToken);
-        }
+        // Timeout de conexão (10 segundos)
+        this.connectionTimeout = window.setTimeout(() => {
+          console.error("Timeout de conexão atingido");
+          if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+            this.ws.close();
+            resolve(false);
+          }
+        }, 10000);
         
-        resolve(true);
-      };
-      
-      this.ws.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-        this.handleMessage(response);
-      };
-      
-      this.ws.onerror = (error) => {
-        console.error('Erro na conexão WebSocket:', error);
+        this.ws.onopen = () => {
+          console.log('Conexão WebSocket estabelecida com a Deriv');
+          if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+            this.connectionTimeout = null;
+          }
+          
+          this.startPingInterval();
+          this.reconnectAttempts = 0;
+          
+          if (this.apiToken) {
+            console.log("Autenticando com token API");
+            this.doAuthenticate();
+          }
+          
+          resolve(true);
+        };
+        
+        this.ws.onmessage = (event) => {
+          try {
+            const response = JSON.parse(event.data);
+            this.handleMessage(response);
+          } catch (error) {
+            console.error('Erro ao processar mensagem WebSocket:', error);
+          }
+        };
+        
+        this.ws.onerror = (error) => {
+          console.error('Erro na conexão WebSocket:', error);
+          if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+            this.connectionTimeout = null;
+          }
+          resolve(false);
+        };
+        
+        this.ws.onclose = (event) => {
+          console.log(`Conexão WebSocket fechada. Código: ${event.code}, Razão: ${event.reason}`);
+          this.isAuthorized = false;
+          this.clearPingInterval();
+          
+          if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+            this.connectionTimeout = null;
+          }
+          
+          // Tentar reconectar
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            console.log(`Tentativa de reconexão ${this.reconnectAttempts} de ${this.maxReconnectAttempts}`);
+            setTimeout(() => {
+              this.connect();
+            }, 3000 * this.reconnectAttempts);
+          } else {
+            console.error("Número máximo de tentativas de reconexão atingido");
+          }
+        };
+      } catch (error) {
+        console.error("Erro ao criar WebSocket:", error);
         resolve(false);
-      };
-      
-      this.ws.onclose = () => {
-        console.log('Conexão WebSocket fechada');
-        this.isAuthorized = false;
-        this.clearPingInterval();
-        
-        // Tentar reconectar
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.reconnectAttempts++;
-          setTimeout(() => {
-            this.connect();
-          }, 3000 * this.reconnectAttempts);
-        }
-      };
+      }
     });
   }
   
@@ -79,9 +126,15 @@ class DerivAPI {
    */
   private send(request: any): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(request));
+      try {
+        const message = JSON.stringify(request);
+        console.log(`Enviando mensagem: ${message}`);
+        this.ws.send(message);
+      } catch (error) {
+        console.error('Erro ao enviar mensagem WebSocket:', error);
+      }
     } else {
-      console.error('WebSocket não está conectado');
+      console.error('WebSocket não está conectado. Estado atual:', this.ws?.readyState);
     }
   }
   
@@ -89,11 +142,22 @@ class DerivAPI {
    * Autentica com o token da API
    */
   public authenticate(token: string): void {
+    if (!token || token.trim() === '') {
+      console.error("Token API vazio ou inválido");
+      return;
+    }
+    
+    console.log("Configurando token API");
     this.apiToken = token;
     
     if (this.ws?.readyState !== WebSocket.OPEN) {
-      this.connect().then(() => {
-        this.doAuthenticate();
+      console.log("WebSocket não está aberto, tentando conectar primeiro");
+      this.connect().then((connected) => {
+        if (connected) {
+          this.doAuthenticate();
+        } else {
+          console.error("Não foi possível conectar ao WebSocket para autenticação");
+        }
       });
     } else {
       this.doAuthenticate();
@@ -101,6 +165,7 @@ class DerivAPI {
   }
   
   private doAuthenticate(): void {
+    console.log("Enviando requisição de autenticação");
     this.send({
       authorize: this.apiToken,
       req_id: 1
@@ -112,9 +177,11 @@ class DerivAPI {
    */
   public subscribe(symbol: string): void {
     if (!this.isAuthorized) {
-      console.error('Não autenticado, não é possível assinar');
+      console.error(`Não autenticado, não é possível assinar ${symbol}`);
       return;
     }
+    
+    console.log(`Assinando ticks para ${symbol}`);
     
     if (!this.activeAssets.includes(symbol)) {
       this.activeAssets.push(symbol);
@@ -123,7 +190,7 @@ class DerivAPI {
     this.send({
       ticks: symbol,
       subscribe: 1,
-      req_id: 2
+      req_id: 2 + this.activeAssets.indexOf(symbol) // IDs únicos para cada assinatura
     });
   }
   
@@ -131,21 +198,25 @@ class DerivAPI {
    * Unsubscribe de ticks de um símbolo
    */
   public unsubscribe(symbol: string): void {
+    console.log(`Cancelando assinatura para ${symbol}`);
     this.activeAssets = this.activeAssets.filter(a => a !== symbol);
     
     this.send({
       forget_all: "ticks",
-      req_id: 3
+      req_id: 100
     });
     
     // Resubscribe nos símbolos ativos restantes
-    this.activeAssets.forEach(asset => {
-      this.send({
-        ticks: asset,
-        subscribe: 1,
-        req_id: 4
+    if (this.activeAssets.length > 0) {
+      console.log(`Reassinando ${this.activeAssets.length} ativos restantes`);
+      this.activeAssets.forEach((asset, index) => {
+        this.send({
+          ticks: asset,
+          subscribe: 1,
+          req_id: 101 + index
+        });
       });
-    });
+    }
   }
   
   /**
@@ -159,20 +230,31 @@ class DerivAPI {
    * Verifica e atualiza assinaturas com base nos ativos selecionados
    */
   public updateSubscriptions(selectedAssets: string[]): void {
-    if (!this.isAuthorized) return;
+    if (!this.isAuthorized) {
+      console.warn("Não autenticado, não é possível atualizar assinaturas");
+      return;
+    }
     
-    // Cancelar assinaturas que não estão mais selecionadas
-    this.activeAssets.forEach(assetId => {
-      if (!selectedAssets.includes(assetId)) {
-        this.unsubscribe(assetId);
-      }
-    });
+    console.log(`Atualizando assinaturas. Ativos selecionados: ${selectedAssets.join(', ')}`);
     
-    // Assinar novos ativos selecionados
-    selectedAssets.forEach(assetId => {
-      if (!this.activeAssets.includes(assetId)) {
-        this.subscribe(assetId);
-      }
+    // Cancelar todas as assinaturas primeiro
+    if (this.activeAssets.length > 0) {
+      this.send({
+        forget_all: "ticks",
+        req_id: 200
+      });
+      
+      this.activeAssets = [];
+    }
+    
+    // Assinar os ativos selecionados
+    selectedAssets.forEach((assetId, index) => {
+      this.activeAssets.push(assetId);
+      this.send({
+        ticks: assetId,
+        subscribe: 1,
+        req_id: 201 + index
+      });
     });
   }
   
@@ -187,23 +269,26 @@ class DerivAPI {
       
       // Reativamos subscrições se existirem
       if (this.activeAssets.length > 0) {
+        console.log(`Reativando ${this.activeAssets.length} assinaturas`);
         this.activeAssets.forEach(asset => this.subscribe(asset));
       }
     }
     
     // Resposta de tick
     if (response.tick) {
+      console.log(`Tick recebido para ${response.tick.symbol}: ${response.tick.quote}`);
       this.processTick(response.tick);
     }
     
     // Resposta de ping
     if (response.ping) {
-      // Enviamos pong para manter a conexão ativa
+      // Não fazemos nada aqui, mas confirmamos que recebemos o ping
+      console.log("Ping recebido da API Deriv");
     }
     
     // Mensagem de erro
     if (response.error) {
-      console.error('Erro da API Deriv:', response.error);
+      console.error('Erro da API Deriv:', response.error.code, response.error.message);
     }
   }
   
@@ -211,14 +296,12 @@ class DerivAPI {
    * Processa um tick e possivelmente gera um sinal de negociação
    */
   private processTick(tick: any): void {
-    // Em uma aplicação real, você analisaria aqui os ticks para ver
-    // se eles correspondem às suas condições de sinal
-    
-    // Para fins de demonstração, vamos criar um sinal com base 
-    // em algumas condições aleatórias (como exemplo)
     const asset = this.findAssetBySymbol(tick.symbol);
     
-    if (!asset) return;
+    if (!asset) {
+      console.warn(`Ativo não encontrado para o símbolo: ${tick.symbol}`);
+      return;
+    }
 
     // Aqui você aplicaria sua lógica real de análise técnica
     // Estamos simulando um sinal a cada 30 ticks (aproximadamente)
@@ -245,6 +328,7 @@ class DerivAPI {
         entryTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
       };
       
+      console.log(`Gerando sinal para ${asset.symbol}: ${direction} com score ${score}`);
       this.onSignalCallback(signal);
     }
   }
@@ -272,6 +356,7 @@ class DerivAPI {
    */
   private startPingInterval(): void {
     this.clearPingInterval();
+    console.log("Iniciando intervalo de ping");
     this.pingInterval = window.setInterval(() => {
       this.send({ ping: 1 });
     }, 30000);
@@ -282,6 +367,7 @@ class DerivAPI {
    */
   private clearPingInterval(): void {
     if (this.pingInterval) {
+      console.log("Limpando intervalo de ping");
       clearInterval(this.pingInterval);
       this.pingInterval = null;
     }
@@ -291,18 +377,25 @@ class DerivAPI {
    * Desconecta do WebSocket
    */
   public disconnect(): void {
+    console.log("Desconectando WebSocket");
     this.clearPingInterval();
     
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+    
     if (this.ws) {
+      this.ws.onclose = null; // Evitar tentativa de reconexão
       this.ws.close();
       this.ws = null;
     }
     
     this.isAuthorized = false;
     this.activeAssets = [];
+    this.reconnectAttempts = 0;
   }
 }
 
 // Singleton instance para uso em toda a aplicação
 export const derivAPI = new DerivAPI();
-

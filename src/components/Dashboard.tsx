@@ -27,7 +27,8 @@ const Dashboard: React.FC = () => {
     setApiToken,
     isConnected,
     useRealSignals,
-    setUseRealSignals
+    setUseRealSignals,
+    connectionError
   } = useDashboard();
 
   const todaySignalsCount = signals.filter(
@@ -54,6 +55,7 @@ const Dashboard: React.FC = () => {
             useRealSignals={useRealSignals}
             setUseRealSignals={setUseRealSignals}
             isConnected={isConnected}
+            connectionError={connectionError}
           />
         </div>
         

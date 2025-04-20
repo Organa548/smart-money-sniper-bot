@@ -49,6 +49,7 @@ export const useDashboard = () => {
   const [apiToken, setApiToken] = useState<string>('');
   const [isConnected, setIsConnected] = useState(false);
   const [useRealSignals, setUseRealSignals] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Update current time every second
   useEffect(() => {
@@ -65,7 +66,7 @@ export const useDashboard = () => {
   // Set up Deriv signal callback
   useEffect(() => {
     derivAPI.setSignalCallback((newSignal: TradeSignal) => {
-      if (isActive && operatingNow) {
+      if (isActive && (operatingNow || tradingSettings.is24HoursMode)) {
         setSignals(prev => [newSignal, ...prev]);
         
         if (telegramSettings.enabled) {
@@ -84,23 +85,59 @@ export const useDashboard = () => {
       // Clean up
       derivAPI.setSignalCallback(() => {});
     };
-  }, [isActive, operatingNow, telegramSettings]);
+  }, [isActive, operatingNow, telegramSettings, tradingSettings.is24HoursMode]);
 
   // Connect/disconnect from Deriv API based on token and active state
   useEffect(() => {
     const connect = async () => {
+      setConnectionError(null);
+      
       if (apiToken && isActive && useRealSignals) {
-        derivAPI.authenticate(apiToken);
-        const connected = await derivAPI.connect();
-        setIsConnected(connected);
-        
-        if (connected) {
-          // Subscribe to selected assets
-          derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
+        try {
+          console.log("Tentando conectar à API Deriv...");
+          derivAPI.authenticate(apiToken);
+          const connected = await derivAPI.connect();
+          
+          if (connected) {
+            console.log("Conexão bem-sucedida com a API Deriv");
+            setIsConnected(true);
+            // Subscribe to selected assets
+            derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
+            
+            toast({
+              title: "API Deriv",
+              description: "Conectado com sucesso à API Deriv",
+              variant: "default",
+            });
+          } else {
+            console.error("Falha ao conectar à API Deriv");
+            setIsConnected(false);
+            setConnectionError("Falha ao estabelecer conexão com a API");
+            
+            toast({
+              title: "Erro de Conexão",
+              description: "Não foi possível conectar à API Deriv. Verifique o token.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao conectar à API Deriv:", error);
+          setIsConnected(false);
+          setConnectionError(`Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+          
+          toast({
+            title: "Erro de Conexão",
+            description: "Ocorreu um erro ao conectar à API Deriv",
+            variant: "destructive",
+          });
         }
+      } else if (!apiToken && useRealSignals) {
+        setConnectionError("Token API não fornecido");
+        setIsConnected(false);
       } else if (!isActive || !useRealSignals) {
         derivAPI.disconnect();
         setIsConnected(false);
+        setConnectionError(null);
       }
     };
     
@@ -114,7 +151,16 @@ export const useDashboard = () => {
   // Update subscriptions when selected assets change
   useEffect(() => {
     if (isActive && useRealSignals && isConnected) {
-      derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
+      try {
+        derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
+      } catch (error) {
+        console.error("Erro ao atualizar subscrições:", error);
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar ativos na API Deriv",
+          variant: "destructive",
+        });
+      }
     }
   }, [tradingSettings.selectedAssets, isActive, useRealSignals, isConnected]);
 
@@ -122,7 +168,7 @@ export const useDashboard = () => {
   useEffect(() => {
     let signalInterval: number | null = null;
     
-    if (isActive && operatingNow && !useRealSignals) {
+    if (isActive && (operatingNow || tradingSettings.is24HoursMode) && !useRealSignals) {
       signalInterval = window.setInterval(() => {
         const enabledAssets = tradingAssets.filter(asset => 
           tradingSettings.selectedAssets.includes(asset.id)
@@ -148,7 +194,7 @@ export const useDashboard = () => {
         clearInterval(signalInterval);
       }
     };
-  }, [isActive, operatingNow, tradingSettings, telegramSettings, useRealSignals]);
+  }, [isActive, operatingNow, tradingSettings, telegramSettings, useRealSignals, tradingSettings.is24HoursMode]);
 
   // Update statistics when signals change
   useEffect(() => {
@@ -158,6 +204,22 @@ export const useDashboard = () => {
 
   const handleToggleActive = () => {
     setIsActive(!isActive);
+    
+    if (!isActive) {
+      toast({
+        title: "Bot Ativado",
+        description: tradingSettings.is24HoursMode 
+          ? "Bot ativado no modo 24 horas" 
+          : "Bot ativado nos horários configurados",
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Bot Desativado",
+        description: "Todas as operações foram interrompidas",
+        variant: "default",
+      });
+    }
   };
 
   return {
@@ -177,6 +239,7 @@ export const useDashboard = () => {
     setApiToken,
     isConnected,
     useRealSignals,
-    setUseRealSignals
+    setUseRealSignals,
+    connectionError
   };
 };

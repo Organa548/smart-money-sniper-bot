@@ -8,6 +8,7 @@ import { downloadCSV } from "@/utils/tradingUtils";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface SignalsSectionProps {
   signals: TradeSignal[];
@@ -18,6 +19,7 @@ interface SignalsSectionProps {
   useRealSignals?: boolean;
   setUseRealSignals?: (use: boolean) => void;
   isConnected?: boolean;
+  connectionError?: string | null;
 }
 
 const SignalsSection: React.FC<SignalsSectionProps> = ({
@@ -28,7 +30,8 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
   setApiToken,
   useRealSignals = false,
   setUseRealSignals,
-  isConnected = false
+  isConnected = false,
+  connectionError = null
 }) => {
   const handleExportCSV = () => {
     downloadCSV(signals);
@@ -64,6 +67,13 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
       <div className="p-4 bg-trading-card rounded-lg border border-trading-neutral/20 space-y-4">
         <h3 className="font-bold">Configurações da API Deriv</h3>
         
+        {useRealSignals && connectionError && (
+          <Alert variant="destructive" className="mb-4 bg-trading-loss/10 text-trading-loss border-trading-loss/30">
+            <AlertTitle>Erro de Conexão</AlertTitle>
+            <AlertDescription>{connectionError}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
           <div className="col-span-2">
             <Label htmlFor="api-token">Token API Deriv</Label>
@@ -75,6 +85,9 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
               placeholder="Cole seu token API aqui"
               className="bg-trading-background border-trading-neutral"
             />
+            <p className="text-xs text-trading-neutral mt-1">
+              Obtenha seu token em app.deriv.com &gt; Configurações &gt; API Token
+            </p>
           </div>
           
           <div className="flex items-center space-x-4">
