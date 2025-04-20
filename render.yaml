@@ -4,11 +4,11 @@ services:
     name: smart-money-sniper-bot
     env: node
     buildCommand: npm install && npm run build
-    startCommand: npm run preview
+    startCommand: npm run preview -- --host 0.0.0.0 --port 8080
     envVars:
       - key: VITE_SUPABASE_URL
         value: https://uibtorxyhvysvuwvcsuy.supabase.co
       - key: VITE_SUPABASE_ANON_KEY
-        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpYnRvcnh5aHZ5c3Z1d3Fjc3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxNjEzMTIsImV4cCI6MjA2MDczNzMxMn0.bukL10A9bqjWA0sfS3HTBX8e5sEoVPJW6LW8ouGaPuc
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpYnRvcnh5aHZ5c3Z1d3Zjc3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxNjEzMTIsImV4cCI6MjA2MDczNzMxMn0.bukL10A9bqjWA0sfS3HTBX8e5sEoVPJW6LW8ouGaPuc
       - key: VITE_WEBSOCKET_URL
         value: wss://ws.binaryws.com/websockets/v3
