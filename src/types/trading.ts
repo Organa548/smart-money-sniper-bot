@@ -5,7 +5,8 @@ export type Asset = {
   id: string;
   name: string;
   symbol: string;
-  type: 'forex' | 'crypto' | 'indices' | 'synthetic';
+  type?: 'forex' | 'crypto' | 'indices' | 'synthetic';
+  icon?: string;
 };
 
 export type TradeSignal = {

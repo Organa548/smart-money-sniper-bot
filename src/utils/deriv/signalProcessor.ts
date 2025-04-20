@@ -1,3 +1,4 @@
+
 import { Asset, TradeSignal, CandleData } from "@/types/trading";
 import { getSignalLevel } from "@/utils/tradingUtils";
 import { analyzeSmartMoney } from "@/utils/smartMoneyAnalysis";
@@ -30,6 +31,7 @@ export class SignalProcessor {
       id: "R_100",
       name: "Volatility 100 Index",
       symbol: "R_100",
+      type: "synthetic",
       icon: "📊"
     };
     

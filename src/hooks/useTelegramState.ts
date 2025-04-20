@@ -31,7 +31,9 @@ export const useTelegramState = () => {
     
     // Enviar uma mensagem de teste na inicialização
     console.log("Enviando mensagem de teste ao inicializar...");
-    handleTestTelegram();
+    setTimeout(() => {
+      handleTestTelegram();
+    }, 3000);
   }, []);
 
   const handleSaveTelegramSettings = (newSettings: TelegramSettings) => {
