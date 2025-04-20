@@ -7,8 +7,8 @@ services:
     startCommand: npm run preview
     envVars:
       - key: VITE_SUPABASE_URL
-        sync: false
+        value: https://uibtorxyhvysvuwvcsuy.supabase.co
       - key: VITE_SUPABASE_ANON_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpYnRvcnh5aHZ5c3Z1d3Fjc3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxNjEzMTIsImV4cCI6MjA2MDczNzMxMn0.bukL10A9bqjWA0sfS3HTBX8e5sEoVPJW6LW8ouGaPuc
       - key: VITE_WEBSOCKET_URL
         value: wss://ws.binaryws.com/websockets/v3
