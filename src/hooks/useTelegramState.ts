@@ -17,6 +17,7 @@ const defaultTelegramSettings: TelegramSettings = {
 
 export const useTelegramState = () => {
   const [telegramSettings, setTelegramSettings] = useState(defaultTelegramSettings);
+  const [testMessageSent, setTestMessageSent] = useState(false);
 
   // Inicializar as configurações com os tokens secretos
   useEffect(() => {
@@ -26,15 +27,22 @@ export const useTelegramState = () => {
       chatId: import.meta.env.VITE_TELEGRAM_CHAT_ID || defaultTelegramSettings.chatId
     };
     
+    console.log("Inicializando configurações do Telegram");
+    console.log("Bot Token definido:", settings.botToken ? "Sim" : "Não");
+    console.log("Chat ID definido:", settings.chatId ? "Sim" : "Não");
+    
     setTelegramSettings(settings);
     telegramService.updateSettings(settings);
     
     // Enviar uma mensagem de teste na inicialização
-    console.log("Enviando mensagem de teste ao inicializar...");
-    setTimeout(() => {
-      handleTestTelegram();
-    }, 3000);
-  }, []);
+    if (!testMessageSent && settings.botToken && settings.chatId) {
+      console.log("Enviando mensagem de teste ao inicializar...");
+      setTimeout(() => {
+        handleTestTelegram();
+        setTestMessageSent(true);
+      }, 3000);
+    }
+  }, [testMessageSent]);
 
   const handleSaveTelegramSettings = (newSettings: TelegramSettings) => {
     setTelegramSettings(newSettings);
@@ -47,6 +55,12 @@ export const useTelegramState = () => {
         description: "As configurações do Telegram foram atualizadas",
         variant: "default",
       });
+      
+      // Enviar mensagem de teste quando as configurações são atualizadas
+      if (!testMessageSent) {
+        handleTestTelegram();
+        setTestMessageSent(true);
+      }
     }
   };
 

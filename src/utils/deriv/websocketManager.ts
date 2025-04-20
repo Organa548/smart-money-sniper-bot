@@ -6,15 +6,32 @@ class WebSocketManager {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private lastError: string | null = null;
+  private isConnecting: boolean = false;
 
   public connect(): Promise<boolean> {
     console.log("WebSocketManager: Iniciando conexão");
+    
+    // Se já estiver conectando, retorne uma promise que será resolvida quando a conexão atual terminar
+    if (this.isConnecting) {
+      console.log("Já há uma tentativa de conexão em andamento, aguardando...");
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!this.isConnecting) {
+            clearInterval(checkInterval);
+            resolve(this.ws?.readyState === WebSocket.OPEN);
+          }
+        }, 500);
+      });
+    }
+    
     return new Promise((resolve) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
         console.log("WebSocket já está conectado");
         resolve(true);
         return;
       }
+      
+      this.isConnecting = true;
       
       if (this.ws) {
         this.ws.onclose = null;
@@ -25,18 +42,29 @@ class WebSocketManager {
       console.log("Iniciando nova conexão WebSocket com a Deriv");
       
       try {
+        // Verificar se o navegador suporta WebSockets
+        if (typeof WebSocket === 'undefined') {
+          console.error("WebSocket não é suportado neste ambiente");
+          this.lastError = "WebSocket não suportado";
+          this.isConnecting = false;
+          resolve(false);
+          return;
+        }
+        
         // Tentando conexão com protocolo wss (WebSocket Secure)
         this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
         console.log("Objeto WebSocket criado, aguardando conexão...");
         
+        // Timeout reduzido para 10 segundos para evitar esperas muito longas
         this.connectionTimeout = window.setTimeout(() => {
-          console.error("Timeout de conexão atingido");
+          console.error("Timeout de conexão atingido após 10 segundos");
           if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
             this.ws.close();
             this.lastError = "Timeout de conexão";
+            this.isConnecting = false;
             resolve(false);
           }
-        }, 15000); // Aumentado para 15 segundos
+        }, 10000);
         
         this.ws.onopen = () => {
           console.log('✅ Conexão WebSocket estabelecida com a Deriv');
@@ -48,6 +76,7 @@ class WebSocketManager {
           this.startPingInterval();
           this.reconnectAttempts = 0;
           this.lastError = null;
+          this.isConnecting = false;
           resolve(true);
         };
         
@@ -59,11 +88,26 @@ class WebSocketManager {
             clearTimeout(this.connectionTimeout);
             this.connectionTimeout = null;
           }
+          
+          this.isConnecting = false;
+          resolve(false);
+        };
+        
+        this.ws.onclose = (event) => {
+          console.log(`Conexão WebSocket fechada. Código: ${event.code}, Razão: ${event.reason}`);
+          this.isConnecting = false;
+          
+          if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+            this.connectionTimeout = null;
+          }
+          
           resolve(false);
         };
       } catch (error) {
         console.error("Erro ao criar WebSocket:", error);
         this.lastError = error instanceof Error ? error.message : "Erro desconhecido";
+        this.isConnecting = false;
         resolve(false);
       }
     });
@@ -130,6 +174,7 @@ class WebSocketManager {
     }
     
     this.reconnectAttempts = 0;
+    this.isConnecting = false;
   }
 
   public getReconnectAttempts(): number {

@@ -11,6 +11,8 @@ class DerivAPI {
   private isAuthorized: boolean = false;
   private subscriptionManager: SubscriptionManager;
   private signalProcessor: SignalProcessor;
+  private connectionAttempts: number = 0;
+  private maxConnectionAttempts: number = 3;
   
   constructor() {
     console.log("DerivAPI inicializado");
@@ -29,48 +31,69 @@ class DerivAPI {
   
   public connect(): Promise<boolean> {
     console.log("Tentando conectar à API Deriv...");
+    
+    if (this.connectionAttempts >= this.maxConnectionAttempts) {
+      console.error(`Número máximo de tentativas de conexão (${this.maxConnectionAttempts}) atingido. Aguarde alguns minutos antes de tentar novamente.`);
+      return Promise.resolve(false);
+    }
+    
+    this.connectionAttempts++;
+    
     return new Promise(async (resolve) => {
-      const connected = await wsManager.connect();
-      
-      if (connected) {
-        console.log("Conexão WebSocket bem-sucedida, configurando handlers...");
-        wsManager.setMessageHandler((event) => {
-          try {
-            const response = JSON.parse(event.data);
-            console.log("Mensagem recebida da API Deriv:", JSON.stringify(response));
-            this.handleMessage(response);
-          } catch (error) {
-            console.error('Erro ao processar mensagem WebSocket:', error);
-          }
-        });
+      try {
+        console.log(`Tentativa de conexão ${this.connectionAttempts}/${this.maxConnectionAttempts}`);
+        const connected = await wsManager.connect();
         
-        wsManager.setCloseHandler((event) => {
-          console.log(`Conexão WebSocket fechada. Código: ${event.code}, Razão: ${event.reason}`);
-          this.isAuthorized = false;
+        if (connected) {
+          console.log("Conexão WebSocket bem-sucedida, configurando handlers...");
+          wsManager.setMessageHandler((event) => {
+            try {
+              const response = JSON.parse(event.data);
+              if (!event.data.includes("tick") && !event.data.includes("ping")) {
+                console.log("Mensagem recebida da API Deriv:", JSON.stringify(response));
+              }
+              this.handleMessage(response);
+            } catch (error) {
+              console.error('Erro ao processar mensagem WebSocket:', error);
+            }
+          });
           
-          if (wsManager.getReconnectAttempts() < 5) {
-            wsManager.incrementReconnectAttempts();
-            console.log(`Tentativa de reconexão ${wsManager.getReconnectAttempts()} de 5`);
-            setTimeout(() => {
-              this.connect();
-            }, 3000 * wsManager.getReconnectAttempts());
+          wsManager.setCloseHandler((event) => {
+            console.log(`Conexão WebSocket fechada. Código: ${event.code}, Razão: ${event.reason}`);
+            this.isAuthorized = false;
+            
+            if (wsManager.getReconnectAttempts() < 5) {
+              wsManager.incrementReconnectAttempts();
+              console.log(`Tentativa de reconexão ${wsManager.getReconnectAttempts()} de 5`);
+              setTimeout(() => {
+                this.connect();
+              }, 3000 * wsManager.getReconnectAttempts());
+            } else {
+              console.error("Número máximo de tentativas de reconexão atingido");
+            }
+          });
+          
+          // Autenticar imediatamente após conexão bem-sucedida
+          if (this.apiToken && this.apiId) {
+            console.log("Iniciando autenticação automática");
+            this.doAuthenticate();
           } else {
-            console.error("Número máximo de tentativas de reconexão atingido");
+            console.warn("API Token ou API ID não definidos, não é possível autenticar automaticamente");
           }
-        });
-        
-        // Autenticar imediatamente após conexão bem-sucedida
-        if (this.apiToken && this.apiId) {
-          console.log("Iniciando autenticação automática");
-          this.doAuthenticate();
+          
+          // Reset connection attempts on successful connection
+          setTimeout(() => {
+            this.connectionAttempts = 0;
+          }, 60000);
         } else {
-          console.warn("API Token ou API ID não definidos, não é possível autenticar automaticamente");
+          console.error("Falha ao conectar WebSocket com a Deriv");
         }
-      } else {
-        console.error("Falha ao conectar WebSocket com a Deriv");
+        
+        resolve(connected);
+      } catch (error) {
+        console.error("Erro ao conectar à API Deriv:", error);
+        resolve(false);
       }
-      
-      resolve(connected);
     });
   }
   
@@ -159,6 +182,10 @@ class DerivAPI {
     console.log("Desconectando WebSocket");
     wsManager.disconnect();
     this.isAuthorized = false;
+  }
+  
+  public resetConnectionAttempts(): void {
+    this.connectionAttempts = 0;
   }
 }
 
