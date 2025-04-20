@@ -61,7 +61,8 @@ export class SignalProcessor {
     // Marcar o resultado após 15 segundos
     setTimeout(() => {
       if (this.onSignalCallback) {
-        const resultSignal = {...signal, result: "WIN"};
+        // Usar o tipo correto "WIN" em vez de uma string genérica
+        const resultSignal = {...signal, result: "WIN" as const};
         this.onSignalCallback(resultSignal);
       }
     }, 15000);
