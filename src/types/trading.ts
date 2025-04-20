@@ -42,3 +42,23 @@ export type TradingStats = {
   byAsset: Record<string, { signals: number; wins: number; winRate: number }>;
   byLevel: Record<string, { signals: number; wins: number; winRate: number }>;
 };
+
+export type CandleData = {
+  timestamp: number;
+  open: number;
+  high: number;
+  close: number;
+  low: number;
+};
+
+export type TechnicalIndicators = {
+  ema21: number[];
+  ema50: number[];
+  rsi: number[];
+};
+
+export type MachineLearningRecommendation = {
+  bestTimeRanges: { startHour: number; endHour: number; winRate: number }[];
+  bestAssets: { assetId: string; winRate: number }[];
+  recommendedMinScore: number;
+};

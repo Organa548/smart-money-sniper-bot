@@ -18,10 +18,16 @@ interface TelegramSettings {
   chatId: string;
   sendWins: boolean;
   sendLosses: boolean;
+  sendResultsAutomatically: boolean;
+  sendSignalAdvance: boolean;
 }
 
 const TelegramConfig: React.FC<TelegramConfigProps> = ({ onSave, currentSettings }) => {
-  const [settings, setSettings] = useState<TelegramSettings>(currentSettings);
+  const [settings, setSettings] = useState<TelegramSettings>({
+    ...currentSettings,
+    sendResultsAutomatically: currentSettings.sendResultsAutomatically ?? true,
+    sendSignalAdvance: currentSettings.sendSignalAdvance ?? true
+  });
   const [isTesting, setIsTesting] = useState(false);
   
   const handleInputChange = (field: keyof TelegramSettings, value: string | boolean) => {
@@ -93,6 +99,26 @@ const TelegramConfig: React.FC<TelegramConfigProps> = ({ onSave, currentSettings
           
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Opções de Envio</h3>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="send-advance" className="cursor-pointer">Enviar sinais com até 15s de antecedência</Label>
+              <Switch 
+                id="send-advance" 
+                checked={settings.sendSignalAdvance}
+                onCheckedChange={(checked) => handleInputChange('sendSignalAdvance', checked)}
+                disabled={!settings.enabled}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="send-auto-results" className="cursor-pointer">Enviar resultados automaticamente</Label>
+              <Switch 
+                id="send-auto-results" 
+                checked={settings.sendResultsAutomatically}
+                onCheckedChange={(checked) => handleInputChange('sendResultsAutomatically', checked)}
+                disabled={!settings.enabled}
+              />
+            </div>
             
             <div className="flex items-center justify-between">
               <Label htmlFor="send-wins" className="cursor-pointer">Enviar resultados WIN</Label>

@@ -44,6 +44,7 @@ const Dashboard: React.FC = () => {
         operatingNow={operatingNow}
         currentTime={currentTime}
         onToggleActive={handleToggleActive}
+        connectedToAPI={isConnected && useRealSignals}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
