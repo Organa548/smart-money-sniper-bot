@@ -1,0 +1,14 @@
+
+services:
+  - type: web
+    name: smart-money-sniper-bot
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_WEBSOCKET_URL
+        value: wss://ws.binaryws.com/websockets/v3
