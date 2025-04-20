@@ -16,21 +16,21 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
   const handleAssetChange = (value: string) => {
     onFilterChange({
       ...currentFilter,
-      asset: value || undefined
+      asset: value === "all" ? undefined : value
     });
   };
 
   const handleLevelChange = (value: string) => {
     onFilterChange({
       ...currentFilter,
-      level: (value as 'A' | 'B' | 'C') || undefined
+      level: (value === "all" ? undefined : value as 'A' | 'B' | 'C')
     });
   };
 
   const handleResultChange = (value: string) => {
     onFilterChange({
       ...currentFilter,
-      result: (value as 'WIN' | 'LOSS' | null) || undefined
+      result: (value === "all" ? undefined : value as 'WIN' | 'LOSS' | null)
     });
   };
 
@@ -47,14 +47,14 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
         <div className="space-y-2">
           <Label htmlFor="asset-filter">Ativo</Label>
           <Select 
-            value={currentFilter.asset || ""} 
+            value={currentFilter.asset || "all"} 
             onValueChange={handleAssetChange}
           >
             <SelectTrigger id="asset-filter">
               <SelectValue placeholder="Todos os ativos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os ativos</SelectItem>
+              <SelectItem value="all">Todos os ativos</SelectItem>
               {tradingAssets.map(asset => (
                 <SelectItem key={asset.id} value={asset.id}>
                   {asset.symbol}
@@ -67,14 +67,14 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
         <div className="space-y-2">
           <Label htmlFor="level-filter">Nível</Label>
           <Select 
-            value={currentFilter.level || ""} 
+            value={currentFilter.level || "all"} 
             onValueChange={handleLevelChange}
           >
             <SelectTrigger id="level-filter">
               <SelectValue placeholder="Todos os níveis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os níveis</SelectItem>
+              <SelectItem value="all">Todos os níveis</SelectItem>
               <SelectItem value="A">Nível A (Sniper)</SelectItem>
               <SelectItem value="B">Nível B (Forte)</SelectItem>
               <SelectItem value="C">Nível C (Moderado)</SelectItem>
@@ -85,14 +85,14 @@ const SignalFilter: React.FC<SignalFilterProps> = ({ onFilterChange, currentFilt
         <div className="space-y-2">
           <Label htmlFor="result-filter">Resultado</Label>
           <Select 
-            value={currentFilter.result || ""} 
+            value={currentFilter.result || "all"} 
             onValueChange={handleResultChange}
           >
             <SelectTrigger id="result-filter">
               <SelectValue placeholder="Todos os resultados" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os resultados</SelectItem>
+              <SelectItem value="all">Todos os resultados</SelectItem>
               <SelectItem value="WIN">WIN</SelectItem>
               <SelectItem value="LOSS">LOSS</SelectItem>
             </SelectContent>
