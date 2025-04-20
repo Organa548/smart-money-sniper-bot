@@ -1,4 +1,3 @@
-
 import { Asset, TradeSignal } from "@/types/trading";
 import { wsManager } from "./websocketManager";
 import { SubscriptionManager } from "./subscriptionManager";
@@ -30,6 +29,14 @@ class DerivAPI {
   }
   
   public connect(): Promise<boolean> {
+    // Verificar se há uma URL customizada no ambiente
+    const customWebsocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
+    
+    if (customWebsocketUrl) {
+      console.log(`URL customizada detectada: ${customWebsocketUrl}`);
+      wsManager.setWebsocketUrl(customWebsocketUrl);
+    }
+    
     console.log("Tentando conectar à API Deriv...");
     
     if (this.connectionAttempts >= this.maxConnectionAttempts) {
