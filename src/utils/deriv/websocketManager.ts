@@ -1,4 +1,3 @@
-import { wsManager } from "./websocketManager";
 
 class WebSocketManager {
   private ws: WebSocket | null = null;
@@ -11,7 +10,7 @@ class WebSocketManager {
   private connectionBlockedByBrowser: boolean = false;
   private websocketUrl: string = 'wss://ws.binaryws.com/websockets/v3';
 
-  // Novo método para definir a URL do WebSocket
+  // Método para definir a URL do WebSocket
   public setWebsocketUrl(url: string): void {
     this.websocketUrl = url;
   }
@@ -176,4 +175,5 @@ class WebSocketManager {
   }
 }
 
+// Criar uma instância única e exportá-la
 export const wsManager = new WebSocketManager();
