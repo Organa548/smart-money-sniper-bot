@@ -1,8 +1,11 @@
-# Welcome to your Lovable project
+
+# Welcome to your Smart Money Sniper Bot project
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/e94cd4c5-8aa7-4377-9a03-9ed9e0bbdf38
+
+**GitHub Repository**: https://github.com/Organa548/sniperproderiv
 
 ## How can I edit this code?
 
