@@ -49,7 +49,7 @@ const AuthPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-trading-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-trading-card rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center">
+        <h2 className="text-2xl font-bold text-center text-trading-neutral">
           {isLogin ? 'Login' : 'Cadastro'}
         </h2>
         <form onSubmit={handleAuth} className="space-y-4">
@@ -59,6 +59,7 @@ const AuthPage: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="bg-trading-background text-trading-neutral"
           />
           <Input
             type="password"
@@ -66,16 +67,17 @@ const AuthPage: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className="bg-trading-background text-trading-neutral"
           />
-          <Button type="submit" className="w-full bg-trading-highlight">
+          <Button type="submit" className="w-full bg-trading-highlight hover:bg-trading-highlight/90">
             {isLogin ? 'Entrar' : 'Cadastrar'}
           </Button>
         </form>
         <div className="text-center">
           <Button 
-            variant="link"
+            variant="link" 
             onClick={() => setIsLogin(!isLogin)}
-            className="text-trading-neutral"
+            className="text-trading-neutral hover:text-trading-highlight"
           >
             {isLogin 
               ? 'Não tem uma conta? Cadastre-se' 
