@@ -5,6 +5,8 @@ import { calculateStats, isWithinOperatingHours } from "@/utils/tradingUtils";
 import { TradingSettingsType } from "@/components/TradingSettings";
 import { generateMockSignal } from "@/utils/smartMoneyAnalysis";
 import { tradingAssets } from "@/utils/tradingUtils";
+import { derivAPI } from "@/utils/derivAPI";
+import { toast } from "@/components/ui/use-toast";
 
 // Default settings for telegram
 const defaultTelegramSettings = {
@@ -43,6 +45,9 @@ export const useDashboard = () => {
   const [tradingSettings, setTradingSettings] = useState(defaultTradingSettings);
   const [isActive, setIsActive] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [apiToken, setApiToken] = useState<string>('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [useRealSignals, setUseRealSignals] = useState(false);
 
   // Update current time every second
   useEffect(() => {
@@ -56,10 +61,68 @@ export const useDashboard = () => {
   // Check if current time is within operating hours
   const operatingNow = isWithinOperatingHours();
 
-  // Generate signals
+  // Set up Deriv signal callback
   useEffect(() => {
-    if (isActive && operatingNow) {
-      const signalInterval = setInterval(() => {
+    derivAPI.setSignalCallback((newSignal: TradeSignal) => {
+      if (isActive && operatingNow) {
+        setSignals(prev => [newSignal, ...prev]);
+        
+        if (telegramSettings.enabled) {
+          console.log("Sending signal to Telegram:", newSignal);
+        }
+        
+        toast({
+          title: "Novo Sinal",
+          description: `${newSignal.asset.symbol} ${newSignal.direction} - Score: ${newSignal.score}`,
+          variant: "default",
+        });
+      }
+    });
+    
+    return () => {
+      // Clean up
+      derivAPI.setSignalCallback(() => {});
+    };
+  }, [isActive, operatingNow, telegramSettings]);
+
+  // Connect/disconnect from Deriv API based on token and active state
+  useEffect(() => {
+    const connect = async () => {
+      if (apiToken && isActive && useRealSignals) {
+        derivAPI.authenticate(apiToken);
+        const connected = await derivAPI.connect();
+        setIsConnected(connected);
+        
+        if (connected) {
+          // Subscribe to selected assets
+          derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
+        }
+      } else if (!isActive || !useRealSignals) {
+        derivAPI.disconnect();
+        setIsConnected(false);
+      }
+    };
+    
+    connect();
+    
+    return () => {
+      derivAPI.disconnect();
+    };
+  }, [apiToken, isActive, useRealSignals, tradingSettings.selectedAssets]);
+
+  // Update subscriptions when selected assets change
+  useEffect(() => {
+    if (isActive && useRealSignals && isConnected) {
+      derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
+    }
+  }, [tradingSettings.selectedAssets, isActive, useRealSignals, isConnected]);
+
+  // Generate mock signals if not using real signals
+  useEffect(() => {
+    let signalInterval: number | null = null;
+    
+    if (isActive && operatingNow && !useRealSignals) {
+      signalInterval = window.setInterval(() => {
         const enabledAssets = tradingAssets.filter(asset => 
           tradingSettings.selectedAssets.includes(asset.id)
         );
@@ -77,10 +140,14 @@ export const useDashboard = () => {
           }
         }
       }, 60000);
-      
-      return () => clearInterval(signalInterval);
     }
-  }, [isActive, operatingNow, tradingSettings, telegramSettings]);
+    
+    return () => {
+      if (signalInterval) {
+        clearInterval(signalInterval);
+      }
+    };
+  }, [isActive, operatingNow, tradingSettings, telegramSettings, useRealSignals]);
 
   // Update statistics when signals change
   useEffect(() => {
@@ -104,6 +171,11 @@ export const useDashboard = () => {
     isActive,
     currentTime,
     operatingNow,
-    handleToggleActive
+    handleToggleActive,
+    apiToken,
+    setApiToken,
+    isConnected,
+    useRealSignals,
+    setUseRealSignals
   };
 };

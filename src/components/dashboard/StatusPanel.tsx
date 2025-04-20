@@ -7,13 +7,17 @@ interface StatusPanelProps {
   operatingNow: boolean;
   telegramEnabled: boolean;
   todaySignalsCount: number;
+  isConnected?: boolean;
+  useRealSignals?: boolean;
 }
 
 const StatusPanel: React.FC<StatusPanelProps> = ({
   isActive,
   operatingNow,
   telegramEnabled,
-  todaySignalsCount
+  todaySignalsCount,
+  isConnected = false,
+  useRealSignals = false
 }) => {
   return (
     <div className="bg-trading-card p-4 rounded-lg border border-trading-neutral/20">
@@ -34,6 +38,14 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
         <div className="flex justify-between">
           <span className="text-trading-neutral">Sinais hoje:</span>
           <span>{todaySignalsCount}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-trading-neutral">API Deriv:</span>
+          <span className={useRealSignals && isConnected ? 'text-trading-win' : 'text-trading-loss'}>
+            {useRealSignals 
+              ? (isConnected ? 'Conectado' : 'Desconectado') 
+              : 'Desativada'}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-trading-neutral">Telegram:</span>

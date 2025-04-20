@@ -22,7 +22,12 @@ const Dashboard: React.FC = () => {
     isActive,
     currentTime,
     operatingNow,
-    handleToggleActive
+    handleToggleActive,
+    apiToken,
+    setApiToken,
+    isConnected,
+    useRealSignals,
+    setUseRealSignals
   } = useDashboard();
 
   const todaySignalsCount = signals.filter(
@@ -44,6 +49,11 @@ const Dashboard: React.FC = () => {
             signals={signals}
             filter={filter}
             onFilterChange={setFilter}
+            apiToken={apiToken}
+            setApiToken={setApiToken}
+            useRealSignals={useRealSignals}
+            setUseRealSignals={setUseRealSignals}
+            isConnected={isConnected}
           />
         </div>
         
@@ -54,6 +64,8 @@ const Dashboard: React.FC = () => {
             operatingNow={operatingNow}
             telegramEnabled={telegramSettings.enabled}
             todaySignalsCount={todaySignalsCount}
+            isConnected={isConnected} 
+            useRealSignals={useRealSignals}
           />
         </div>
       </div>
