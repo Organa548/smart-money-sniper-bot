@@ -8,6 +8,7 @@ class WebSocketManager {
   private lastError: string | null = null;
 
   public connect(): Promise<boolean> {
+    console.log("WebSocketManager: Iniciando conexão");
     return new Promise((resolve) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
         console.log("WebSocket já está conectado");
@@ -26,6 +27,7 @@ class WebSocketManager {
       try {
         // Tentando conexão com protocolo wss (WebSocket Secure)
         this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
+        console.log("Objeto WebSocket criado, aguardando conexão...");
         
         this.connectionTimeout = window.setTimeout(() => {
           console.error("Timeout de conexão atingido");
@@ -34,10 +36,10 @@ class WebSocketManager {
             this.lastError = "Timeout de conexão";
             resolve(false);
           }
-        }, 10000);
+        }, 15000); // Aumentado para 15 segundos
         
         this.ws.onopen = () => {
-          console.log('Conexão WebSocket estabelecida com a Deriv');
+          console.log('✅ Conexão WebSocket estabelecida com a Deriv');
           if (this.connectionTimeout) {
             clearTimeout(this.connectionTimeout);
             this.connectionTimeout = null;
@@ -51,7 +53,7 @@ class WebSocketManager {
         
         this.ws.onerror = (error) => {
           console.error('Erro na conexão WebSocket:', error);
-          this.lastError = "Bloqueio de conexão pelo navegador";
+          this.lastError = "Bloqueio de conexão pelo navegador ou servidor não disponível";
           
           if (this.connectionTimeout) {
             clearTimeout(this.connectionTimeout);
@@ -71,7 +73,10 @@ class WebSocketManager {
     if (this.ws?.readyState === WebSocket.OPEN) {
       try {
         const messageStr = JSON.stringify(message);
-        console.log(`Enviando mensagem: ${messageStr}`);
+        // Reduzindo logs para evitar poluição, exceto para mensagens importantes
+        if (!messageStr.includes("ping") && !messageStr.includes("ticks")) {
+          console.log(`Enviando mensagem: ${messageStr}`);
+        }
         this.ws.send(messageStr);
       } catch (error) {
         console.error('Erro ao enviar mensagem WebSocket:', error);

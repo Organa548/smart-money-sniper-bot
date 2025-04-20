@@ -1,3 +1,4 @@
+
 import { TradeSignal } from "@/types/trading";
 
 export interface TelegramSettings {
@@ -15,20 +16,31 @@ export class TelegramService {
   
   constructor(settings: TelegramSettings) {
     this.settings = settings;
+    console.log("TelegramService inicializado com token:", settings.botToken ? "Definido" : "Não definido");
+    console.log("TelegramService inicializado com chatId:", settings.chatId ? "Definido" : "Não definido");
   }
   
   public updateSettings(settings: TelegramSettings): void {
     this.settings = settings;
+    console.log("TelegramService configurações atualizadas");
   }
   
   public async sendSignal(signal: TradeSignal): Promise<boolean> {
-    if (!this.settings.enabled || !this.settings.botToken || !this.settings.chatId) {
-      console.log("Telegram desativado ou configurações incompletas");
+    console.log("Tentando enviar sinal para o Telegram...");
+    
+    if (!this.settings.enabled) {
+      console.log("Telegram desativado nas configurações");
+      return false;
+    }
+    
+    if (!this.settings.botToken || !this.settings.chatId) {
+      console.error("Token do bot ou ChatID não configurados");
       return false;
     }
     
     try {
       const message = this.formatSignalMessage(signal);
+      console.log("Mensagem formatada para o Telegram:", message);
       return await this.sendMessage(message);
     } catch (error) {
       console.error("Erro ao enviar sinal para o Telegram:", error);
@@ -37,7 +49,15 @@ export class TelegramService {
   }
   
   public async sendResult(signal: TradeSignal): Promise<boolean> {
-    if (!this.settings.enabled || !this.settings.botToken || !this.settings.chatId) {
+    console.log("Tentando enviar resultado para o Telegram...");
+    
+    if (!this.settings.enabled) {
+      console.log("Telegram desativado nas configurações");
+      return false;
+    }
+    
+    if (!this.settings.botToken || !this.settings.chatId) {
+      console.error("Token do bot ou ChatID não configurados");
       return false;
     }
     
@@ -55,6 +75,7 @@ export class TelegramService {
     
     try {
       const message = this.formatResultMessage(signal);
+      console.log("Mensagem de resultado formatada para o Telegram:", message);
       return await this.sendMessage(message);
     } catch (error) {
       console.error("Erro ao enviar resultado para o Telegram:", error);
@@ -63,12 +84,23 @@ export class TelegramService {
   }
   
   public async sendTestMessage(): Promise<boolean> {
-    if (!this.settings.enabled || !this.settings.botToken || !this.settings.chatId) {
+    console.log("Enviando mensagem de teste para o Telegram...");
+    console.log("Token:", this.settings.botToken ? "Definido" : "Não definido");
+    console.log("ChatID:", this.settings.chatId ? "Definido" : "Não definido");
+    
+    if (!this.settings.enabled) {
+      console.log("Telegram desativado nas configurações");
+      return false;
+    }
+    
+    if (!this.settings.botToken || !this.settings.chatId) {
+      console.error("Token do bot ou ChatID não configurados");
       return false;
     }
     
     try {
-      const message = "🔔 *Teste de Conexão* 🔔\n\nConfiguração do bot realizada com sucesso!";
+      const message = "🔔 *TESTE DE CONEXÃO* 🔔\n\nConfigurações do bot verificadas com sucesso!\nHora do teste: " + new Date().toLocaleTimeString();
+      console.log("Enviando mensagem de teste:", message);
       return await this.sendMessage(message);
     } catch (error) {
       console.error("Erro ao enviar mensagem de teste para o Telegram:", error);
@@ -109,6 +141,9 @@ export class TelegramService {
   
   private async sendMessage(text: string): Promise<boolean> {
     try {
+      console.log(`Enviando mensagem para o Telegram: URL: https://api.telegram.org/bot<TOKEN>/sendMessage`);
+      console.log(`Chat ID utilizado: ${this.settings.chatId}`);
+      
       const url = `https://api.telegram.org/bot${this.settings.botToken}/sendMessage`;
       
       const params = {
@@ -117,6 +152,7 @@ export class TelegramService {
         parse_mode: 'Markdown'
       };
       
+      console.log("Iniciando fetch para API do Telegram");
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -125,7 +161,10 @@ export class TelegramService {
         body: JSON.stringify(params)
       });
       
+      console.log("Resposta recebida da API do Telegram, status:", response.status);
+      
       const data = await response.json();
+      console.log("Dados da resposta:", JSON.stringify(data));
       
       if (!data.ok) {
         console.error("Erro API Telegram:", data.description);
@@ -150,4 +189,13 @@ export const telegramService = new TelegramService({
   sendLosses: true,
   sendResultsAutomatically: true,
   sendSignalAdvance: true
+});
+
+// Enviando uma mensagem de teste no carregamento do módulo
+telegramService.sendTestMessage().then(success => {
+  if (success) {
+    console.log("✅ Mensagem de teste enviada com sucesso para o Telegram!");
+  } else {
+    console.error("❌ Falha ao enviar mensagem de teste para o Telegram!");
+  }
 });

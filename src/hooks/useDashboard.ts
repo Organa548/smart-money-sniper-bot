@@ -37,6 +37,16 @@ export const useDashboard = () => {
   // Check if current time is within operating hours or 24-hour mode is enabled
   const operatingNow = tradingSettings.is24HoursMode || isWithinOperatingHours(tradingSettings.operatingHours);
 
+  // Handler for receiving new signals from Deriv API
+  const handleNewSignal = (newSignal: TradeSignal) => {
+    console.log("Novo sinal recebido:", newSignal);
+    setSignals(prev => [newSignal, ...prev]);
+    
+    // Enviar para o Telegram automaticamente
+    console.log("Enviando sinal para o Telegram...");
+    telegramService.sendSignal(newSignal);
+  };
+
   const { signals, setSignals } = useTradeSignals(
     isActive,
     operatingNow,
@@ -49,25 +59,24 @@ export const useDashboard = () => {
 
   // Ativando sinais reais da Deriv por padrão
   useEffect(() => {
+    console.log("Inicializando dashboard - ativando sistemas...");
+    
+    // Ativando imediatamente
     setUseRealSignals(true);
     setIsActive(true);
-
+    
+    // Testar conexão com o Telegram
+    setTimeout(() => {
+      console.log("Executando teste do Telegram após inicialização...");
+      handleTestTelegram();
+    }, 5000);
+    
     toast({
       title: "Sistema Ativado",
       description: "Conexão com a API Deriv iniciada e envio de sinais para o Telegram ativado",
       variant: "default",
     });
   }, []);
-
-  // Handler for receiving new signals from Deriv API
-  const handleNewSignal = (newSignal: TradeSignal) => {
-    console.log("Novo sinal recebido:", newSignal);
-    setSignals(prev => [newSignal, ...prev]);
-    
-    // Enviar para o Telegram automaticamente
-    console.log("Enviando sinal para o Telegram...");
-    telegramService.sendSignal(newSignal);
-  };
 
   const { isConnected, connectionError } = useDerivConnection(
     apiToken,
@@ -102,12 +111,8 @@ export const useDashboard = () => {
               if (s.id === signal.id) {
                 const updatedSignal = { ...s, result };
                 
-                // Enviar resultado para o Telegram se configurado
-                if (telegramSettings.enabled && telegramSettings.sendResultsAutomatically &&
-                   ((result === 'WIN' && telegramSettings.sendWins) || 
-                    (result === 'LOSS' && telegramSettings.sendLosses))) {
-                  telegramService.sendResult(updatedSignal);
-                }
+                // Enviar resultado para o Telegram automaticamente
+                telegramService.sendResult(updatedSignal);
                 
                 return updatedSignal;
               }
@@ -119,7 +124,7 @@ export const useDashboard = () => {
     }, 30000); // Verificar a cada 30 segundos
     
     return () => clearInterval(resultCheckInterval);
-  }, [isActive, signals, telegramSettings, setSignals]);
+  }, [isActive, signals, setSignals]);
 
   const handleToggleActive = () => {
     setIsActive(!isActive);

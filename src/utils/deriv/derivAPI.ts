@@ -1,3 +1,4 @@
+
 import { Asset, TradeSignal } from "@/types/trading";
 import { wsManager } from "./websocketManager";
 import { SubscriptionManager } from "./subscriptionManager";
@@ -12,6 +13,10 @@ class DerivAPI {
   private signalProcessor: SignalProcessor;
   
   constructor() {
+    console.log("DerivAPI inicializado");
+    console.log("API Token definido:", this.apiToken ? "Sim" : "Não");
+    console.log("API ID definido:", this.apiId ? "Sim" : "Não");
+    
     this.subscriptionManager = new SubscriptionManager(wsManager.send.bind(wsManager));
     this.signalProcessor = new SignalProcessor();
     
@@ -23,13 +28,16 @@ class DerivAPI {
   }
   
   public connect(): Promise<boolean> {
+    console.log("Tentando conectar à API Deriv...");
     return new Promise(async (resolve) => {
       const connected = await wsManager.connect();
       
       if (connected) {
+        console.log("Conexão WebSocket bem-sucedida, configurando handlers...");
         wsManager.setMessageHandler((event) => {
           try {
             const response = JSON.parse(event.data);
+            console.log("Mensagem recebida da API Deriv:", JSON.stringify(response));
             this.handleMessage(response);
           } catch (error) {
             console.error('Erro ao processar mensagem WebSocket:', error);
@@ -50,6 +58,16 @@ class DerivAPI {
             console.error("Número máximo de tentativas de reconexão atingido");
           }
         });
+        
+        // Autenticar imediatamente após conexão bem-sucedida
+        if (this.apiToken && this.apiId) {
+          console.log("Iniciando autenticação automática");
+          this.doAuthenticate();
+        } else {
+          console.warn("API Token ou API ID não definidos, não é possível autenticar automaticamente");
+        }
+      } else {
+        console.error("Falha ao conectar WebSocket com a Deriv");
       }
       
       resolve(connected);
@@ -108,19 +126,24 @@ class DerivAPI {
   
   private handleMessage(response: any): void {
     if (response.authorize) {
-      console.log('Autorizado com sucesso na API Deriv');
+      console.log('✅ Autorizado com sucesso na API Deriv! Balance:', response.authorize?.balance);
       this.isAuthorized = true;
       
-      const activeAssets = this.subscriptionManager.getActiveAssets();
-      if (activeAssets.length > 0) {
-        console.log(`Reativando ${activeAssets.length} assinaturas`);
-        activeAssets.forEach(asset => this.subscribe(asset));
-      }
+      // Após autenticação bem-sucedida, ativar assinaturas
+      console.log("Assinando ativos padrão após autenticação...");
+      this.updateSubscriptions(tradingAssets.map(asset => asset.id));
     }
     
     if (response.tick) {
+      // Reduzir logs para evitar poluição do console
+      if (Math.random() < 0.01) {  // Apenas 1% dos ticks são logados
+        console.log(`Tick recebido para ${response.tick.symbol}: ${response.tick.quote}`);
+      }
+      
       const asset = this.findAssetBySymbol(response.tick.symbol);
-      this.signalProcessor.processTick(response.tick, asset);
+      if (asset) {
+        this.signalProcessor.processTick(response.tick, asset);
+      }
     }
     
     if (response.error) {
@@ -133,9 +156,20 @@ class DerivAPI {
   }
   
   public disconnect(): void {
+    console.log("Desconectando WebSocket");
     wsManager.disconnect();
     this.isAuthorized = false;
   }
 }
 
 export const derivAPI = new DerivAPI();
+
+// Conectar automaticamente quando o módulo é carregado
+console.log("Iniciando conexão automática com a Deriv API...");
+derivAPI.connect().then(connected => {
+  if (connected) {
+    console.log("✅ Conexão inicial com a Deriv API bem-sucedida");
+  } else {
+    console.error("❌ Falha na conexão inicial com a Deriv API");
+  }
+});

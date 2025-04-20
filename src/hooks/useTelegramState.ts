@@ -1,14 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TelegramSettings } from "@/utils/telegramService";
 import { telegramService } from "@/utils/telegramService";
 import { toast } from "@/components/ui/use-toast";
 
 // Default settings for telegram
 const defaultTelegramSettings: TelegramSettings = {
-  enabled: false,
-  botToken: "",
-  chatId: "",
+  enabled: true,  // Sempre ativado por padrão
+  botToken: import.meta.env.VITE_TELEGRAM_BOT_TOKEN || "",
+  chatId: import.meta.env.VITE_TELEGRAM_CHAT_ID || "",
   sendWins: true,
   sendLosses: true,
   sendResultsAutomatically: true,
@@ -17,6 +17,22 @@ const defaultTelegramSettings: TelegramSettings = {
 
 export const useTelegramState = () => {
   const [telegramSettings, setTelegramSettings] = useState(defaultTelegramSettings);
+
+  // Inicializar as configurações com os tokens secretos
+  useEffect(() => {
+    const settings = {
+      ...defaultTelegramSettings,
+      botToken: import.meta.env.VITE_TELEGRAM_BOT_TOKEN || defaultTelegramSettings.botToken,
+      chatId: import.meta.env.VITE_TELEGRAM_CHAT_ID || defaultTelegramSettings.chatId
+    };
+    
+    setTelegramSettings(settings);
+    telegramService.updateSettings(settings);
+    
+    // Enviar uma mensagem de teste na inicialização
+    console.log("Enviando mensagem de teste ao inicializar...");
+    handleTestTelegram();
+  }, []);
 
   const handleSaveTelegramSettings = (newSettings: TelegramSettings) => {
     setTelegramSettings(newSettings);
@@ -33,20 +49,41 @@ export const useTelegramState = () => {
   };
 
   const handleTestTelegram = async () => {
-    const success = await telegramService.sendTestMessage();
+    console.log("Testando conexão com o Telegram...");
     
-    if (success) {
+    try {
+      // Garantir que estamos usando as configurações mais recentes
+      telegramService.updateSettings(telegramSettings);
+      
+      const success = await telegramService.sendTestMessage();
+      
+      if (success) {
+        console.log("✅ Teste do Telegram bem-sucedido!");
+        toast({
+          title: "Teste Bem-Sucedido",
+          description: "Mensagem de teste enviada com sucesso para o Telegram",
+          variant: "default",
+        });
+      } else {
+        console.error("❌ Falha no teste do Telegram");
+        toast({
+          title: "Falha no Teste",
+          description: "Não foi possível enviar a mensagem de teste. Verifique as configurações.",
+          variant: "destructive",
+        });
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Erro ao testar conexão Telegram:", error);
+      
       toast({
-        title: "Teste Bem-Sucedido",
-        description: "Mensagem de teste enviada com sucesso para o Telegram",
-        variant: "default",
-      });
-    } else {
-      toast({
-        title: "Falha no Teste",
-        description: "Não foi possível enviar a mensagem de teste. Verifique as configurações.",
+        title: "Erro no Teste",
+        description: `Erro ao testar conexão: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
         variant: "destructive",
       });
+      
+      return false;
     }
   };
 

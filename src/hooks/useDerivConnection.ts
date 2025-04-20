@@ -24,21 +24,40 @@ export const useDerivConnection = (
     const connect = async () => {
       setConnectionError(null);
       
-      if (apiToken && apiId && isActive && useRealSignals) {
+      if (isActive && useRealSignals) {
         try {
           console.log("Tentando conectar à API Deriv...");
+          console.log("API Token:", apiToken ? "Definido" : "Não definido");
+          console.log("API ID:", apiId ? "Definido" : "Não definido");
+          
           setConnectionAttempts(prev => prev + 1);
           
+          // Certifique-se de que desconectamos antes de tentar uma nova conexão
           derivAPI.disconnect();
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
-          derivAPI.authenticate(apiToken, apiId);
+          // Autenticar com os tokens obtidos dos secrets do Supabase
+          const token = import.meta.env.VITE_DERIV_API_TOKEN || apiToken;
+          const id = import.meta.env.VITE_DERIV_API_ID || apiId;
+          
+          console.log("Usando token:", token ? "Definido" : "Não definido");
+          console.log("Usando ID:", id ? "Definido" : "Não definido");
+          
+          if (token && id) {
+            derivAPI.authenticate(token, id);
+          } else {
+            console.error("Falha: Token ou ID não disponíveis");
+          }
+          
           const connected = await derivAPI.connect();
           
           if (connected) {
             console.log("Conexão bem-sucedida com a API Deriv");
             setIsConnected(true);
             setConnectionAttempts(0);
+            
+            // Atualizando assinaturas
+            console.log("Atualizando assinaturas para ativos selecionados:", tradingSettings.selectedAssets);
             derivAPI.updateSubscriptions(tradingSettings.selectedAssets);
             
             toast({
@@ -52,14 +71,14 @@ export const useDerivConnection = (
             
             const wsError = wsManager.getLastError();
             const errorMsg = wsError 
-              ? `Erro de conexão: ${wsError}. Pode ser um bloqueio do navegador.`
-              : "Falha ao estabelecer conexão com a API. Verifique seu token, API ID e conexão com a internet.";
+              ? `Erro de conexão: ${wsError}`
+              : "Falha ao estabelecer conexão com a API. Verifique sua conexão com a internet.";
             
             setConnectionError(errorMsg);
             
             toast({
               title: "Erro de Conexão",
-              description: "Não foi possível conectar à API Deriv. Esse erro pode ser causado por bloqueios do navegador para WebSockets.",
+              description: errorMsg,
               variant: "destructive",
             });
           }
@@ -74,13 +93,6 @@ export const useDerivConnection = (
             variant: "destructive",
           });
         }
-      } else if ((!apiToken || !apiId) && useRealSignals) {
-        const missingParams = [];
-        if (!apiToken) missingParams.push("Token API");
-        if (!apiId) missingParams.push("API ID");
-        
-        setConnectionError(`${missingParams.join(" e ")} não fornecido(s)`);
-        setIsConnected(false);
       } else if (!isActive || !useRealSignals) {
         derivAPI.disconnect();
         setIsConnected(false);
@@ -90,8 +102,17 @@ export const useDerivConnection = (
     
     connect();
     
+    // Verificação de conexão periódica
+    const connectionCheckInterval = setInterval(() => {
+      if (isActive && useRealSignals && !isConnected && connectionAttempts < 5) {
+        console.log("Verificando reconexão automática...");
+        connect();
+      }
+    }, 30000); // Verificar a cada 30 segundos
+    
     return () => {
       derivAPI.disconnect();
+      clearInterval(connectionCheckInterval);
     };
   }, [apiToken, apiId, isActive, useRealSignals, tradingSettings.selectedAssets, connectionAttempts]);
 
@@ -99,7 +120,7 @@ export const useDerivConnection = (
   useEffect(() => {
     let reconnectTimer: number | null = null;
     
-    if (useRealSignals && isActive && !isConnected && apiToken && apiId && connectionAttempts < 3) {
+    if (useRealSignals && isActive && !isConnected && connectionAttempts < 3) {
       reconnectTimer = window.setTimeout(() => {
         console.log(`Tentativa de reconexão ${connectionAttempts + 1}/3`);
         setConnectionAttempts(prev => prev + 1);
@@ -111,12 +132,15 @@ export const useDerivConnection = (
         clearTimeout(reconnectTimer);
       }
     };
-  }, [useRealSignals, isActive, isConnected, apiToken, apiId, connectionAttempts]);
+  }, [useRealSignals, isActive, isConnected, connectionAttempts]);
 
   // Set up Deriv signal callback
   useEffect(() => {
     derivAPI.setSignalCallback((newSignal: TradeSignal) => {
+      console.log("Sinal recebido da Deriv API:", newSignal);
+      
       if (isActive && (operatingNow || tradingSettings.is24HoursMode)) {
+        console.log("Processando sinal recebido...");
         onNewSignal(newSignal);
         
         toast({
@@ -124,6 +148,8 @@ export const useDerivConnection = (
           description: `${newSignal.asset.symbol} ${newSignal.direction} - Score: ${newSignal.score}`,
           variant: "default",
         });
+      } else {
+        console.log("Sinal ignorado: Bot inativo ou fora do horário operacional");
       }
     });
     

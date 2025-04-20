@@ -1,4 +1,3 @@
-
 import { Asset, TradeSignal, CandleData } from "@/types/trading";
 import { getSignalLevel } from "@/utils/tradingUtils";
 import { analyzeSmartMoney } from "@/utils/smartMoneyAnalysis";
@@ -8,13 +7,71 @@ export class SignalProcessor {
   private candles: Map<string, CandleData[]> = new Map();
   private lastProcessedCandle: Map<string, number> = new Map();
   private indicators: Map<string, any> = new Map();
+  private testSignalSent: boolean = false;
   
   constructor() {
     this.initializeIndicators();
+    
+    // Enviar um sinal de teste após 10 segundos
+    setTimeout(() => {
+      this.generateTestSignal();
+    }, 10000);
+  }
+
+  // Método para criar um sinal de teste imediato
+  private generateTestSignal(): void {
+    if (this.testSignalSent || !this.onSignalCallback) return;
+    
+    console.log("Gerando sinal de teste para verificação...");
+    
+    // Encontrar o primeiro ativo disponível
+    const assetSymbol = "R_100"; // Um ativo comum da Deriv
+    const asset: Asset = {
+      id: "R_100",
+      name: "Volatility 100 Index",
+      symbol: "R_100",
+      icon: "📊"
+    };
+    
+    const now = new Date();
+    const signal: TradeSignal = {
+      id: "test-" + Date.now().toString(),
+      asset,
+      direction: "CALL",
+      timestamp: now.getTime(),
+      score: 5,
+      level: "A",
+      reasons: [
+        "TESTE: Sinal gerado para verificação",
+        "Conexão de API funcionando",
+        "EMA Pullback",
+        "RSI 30 (Oversold)",
+        "Reversal Candle"
+      ],
+      entryTime: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
+      result: null
+    };
+    
+    console.log("Enviando sinal de teste para callback:", signal);
+    this.onSignalCallback(signal);
+    this.testSignalSent = true;
+    
+    // Marcar o resultado após 15 segundos
+    setTimeout(() => {
+      if (this.onSignalCallback) {
+        const resultSignal = {...signal, result: "WIN"};
+        this.onSignalCallback(resultSignal);
+      }
+    }, 15000);
   }
 
   public setSignalCallback(callback: (signal: TradeSignal) => void): void {
     this.onSignalCallback = callback;
+    
+    // Se definirmos um novo callback e ainda não enviamos o sinal de teste, envie-o agora
+    if (!this.testSignalSent) {
+      this.generateTestSignal();
+    }
   }
 
   private initializeIndicators(): void {
