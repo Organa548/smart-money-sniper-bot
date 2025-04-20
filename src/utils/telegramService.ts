@@ -141,7 +141,7 @@ export class TelegramService {
   }
 }
 
-// Instância global para ser usada em toda a aplicação
+// Instância global atualizada para usar os segredos do Supabase
 export const telegramService = new TelegramService({
   enabled: true,
   botToken: import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '',

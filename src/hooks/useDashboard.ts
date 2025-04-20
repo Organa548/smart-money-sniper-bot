@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { downloadCSV, isWithinOperatingHours } from "@/utils/tradingUtils";
 import { toast } from "@/components/ui/use-toast";
@@ -48,16 +47,26 @@ export const useDashboard = () => {
 
   const { filter, setFilter, stats, mlRecommendation } = useSignalsState(signals);
 
+  // Ativando sinais reais da Deriv por padrão
+  useEffect(() => {
+    setUseRealSignals(true);
+    setIsActive(true);
+
+    toast({
+      title: "Sistema Ativado",
+      description: "Conexão com a API Deriv iniciada e envio de sinais para o Telegram ativado",
+      variant: "default",
+    });
+  }, []);
+
   // Handler for receiving new signals from Deriv API
   const handleNewSignal = (newSignal: TradeSignal) => {
     console.log("Novo sinal recebido:", newSignal);
     setSignals(prev => [newSignal, ...prev]);
     
-    // Enviar para o Telegram se configurado
-    if (telegramSettings.enabled && telegramSettings.sendSignalAdvance) {
-      console.log("Enviando sinal para o Telegram...");
-      telegramService.sendSignal(newSignal);
-    }
+    // Enviar para o Telegram automaticamente
+    console.log("Enviando sinal para o Telegram...");
+    telegramService.sendSignal(newSignal);
   };
 
   const { isConnected, connectionError } = useDerivConnection(

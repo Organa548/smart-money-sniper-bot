@@ -13,13 +13,13 @@ const defaultTradingSettings: TradingSettingsType = {
   minScoreForSignal: 4,
   selectedAssets: tradingAssets.map(asset => asset.id),
   autoTrade: false,
-  is24HoursMode: false
+  is24HoursMode: true // Ativando modo 24 horas por padrão
 };
 
 export const useTradingState = () => {
   const [tradingSettings, setTradingSettings] = useState(defaultTradingSettings);
   const [isActive, setIsActive] = useState(false);
-  const [useRealSignals, setUseRealSignals] = useState(false);
+  const [useRealSignals, setUseRealSignals] = useState(true); // Ativando sinais reais por padrão
 
   return {
     tradingSettings,
