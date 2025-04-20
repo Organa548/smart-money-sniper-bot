@@ -16,6 +16,8 @@ interface SignalsSectionProps {
   onFilterChange: (filter: SignalFilterType) => void;
   apiToken?: string;
   setApiToken?: (token: string) => void;
+  apiId?: string;
+  setApiId?: (id: string) => void;
   useRealSignals?: boolean;
   setUseRealSignals?: (use: boolean) => void;
   isConnected?: boolean;
@@ -28,6 +30,8 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
   onFilterChange,
   apiToken = "",
   setApiToken,
+  apiId = "",
+  setApiId,
   useRealSignals = false,
   setUseRealSignals,
   isConnected = false,
@@ -40,6 +44,12 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
   const handleApiTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (setApiToken) {
       setApiToken(e.target.value);
+    }
+  };
+
+  const handleApiIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (setApiId) {
+      setApiId(e.target.value);
     }
   };
 
@@ -74,8 +84,23 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
           </Alert>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+          <div>
+            <Label htmlFor="api-id">API ID Deriv</Label>
+            <Input
+              id="api-id"
+              type="text"
+              value={apiId}
+              onChange={handleApiIdChange}
+              placeholder="Digite o App ID da Deriv"
+              className="bg-trading-background border-trading-neutral"
+            />
+            <p className="text-xs text-trading-neutral mt-1">
+              Obtenha seu App ID em app.deriv.com &gt; Sinta-se livre para criar
+            </p>
+          </div>
+          
+          <div>
             <Label htmlFor="api-token">Token API Deriv</Label>
             <Input
               id="api-token"
@@ -89,25 +114,25 @@ const SignalsSection: React.FC<SignalsSectionProps> = ({
               Obtenha seu token em app.deriv.com &gt; Configurações &gt; API Token
             </p>
           </div>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex-1">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="use-real-signals" 
+                checked={useRealSignals}
+                onCheckedChange={handleUseRealSignalsChange}
+              />
+              <Label htmlFor="use-real-signals">Usar API Real</Label>
+            </div>
+          </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  id="use-real-signals" 
-                  checked={useRealSignals}
-                  onCheckedChange={handleUseRealSignalsChange}
-                />
-                <Label htmlFor="use-real-signals">Usar API Real</Label>
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-trading-win' : 'bg-trading-loss'}`}></div>
-              <span className="ml-2 text-sm">
-                {isConnected ? 'Conectado' : 'Desconectado'}
-              </span>
-            </div>
+          <div className="flex items-center">
+            <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-trading-win' : 'bg-trading-loss'}`}></div>
+            <span className="ml-2 text-sm">
+              {isConnected ? 'Conectado' : 'Desconectado'}
+            </span>
           </div>
         </div>
       </div>

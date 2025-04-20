@@ -25,6 +25,8 @@ const Dashboard: React.FC = () => {
     handleToggleActive,
     apiToken,
     setApiToken,
+    apiId,
+    setApiId,
     isConnected,
     useRealSignals,
     setUseRealSignals,
@@ -52,6 +54,8 @@ const Dashboard: React.FC = () => {
             onFilterChange={setFilter}
             apiToken={apiToken}
             setApiToken={setApiToken}
+            apiId={apiId}
+            setApiId={setApiId}
             useRealSignals={useRealSignals}
             setUseRealSignals={setUseRealSignals}
             isConnected={isConnected}

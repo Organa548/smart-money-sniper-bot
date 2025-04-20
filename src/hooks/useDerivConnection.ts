@@ -7,6 +7,7 @@ import { TradingSettingsType } from "@/components/TradingSettings";
 
 export const useDerivConnection = (
   apiToken: string,
+  apiId: string,
   isActive: boolean,
   useRealSignals: boolean,
   tradingSettings: TradingSettingsType,
@@ -22,7 +23,7 @@ export const useDerivConnection = (
     const connect = async () => {
       setConnectionError(null);
       
-      if (apiToken && isActive && useRealSignals) {
+      if (apiToken && apiId && isActive && useRealSignals) {
         try {
           console.log("Tentando conectar à API Deriv...");
           setConnectionAttempts(prev => prev + 1);
@@ -30,7 +31,7 @@ export const useDerivConnection = (
           derivAPI.disconnect();
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          derivAPI.authenticate(apiToken);
+          derivAPI.authenticate(apiToken, apiId);
           const connected = await derivAPI.connect();
           
           if (connected) {
@@ -51,7 +52,7 @@ export const useDerivConnection = (
             
             toast({
               title: "Erro de Conexão",
-              description: "Não foi possível conectar à API Deriv. Verifique o token e sua conexão com a internet.",
+              description: "Não foi possível conectar à API Deriv. Verifique o token, API ID e sua conexão com a internet.",
               variant: "destructive",
             });
           }
@@ -66,8 +67,12 @@ export const useDerivConnection = (
             variant: "destructive",
           });
         }
-      } else if (!apiToken && useRealSignals) {
-        setConnectionError("Token API não fornecido");
+      } else if ((!apiToken || !apiId) && useRealSignals) {
+        const missingParams = [];
+        if (!apiToken) missingParams.push("Token API");
+        if (!apiId) missingParams.push("API ID");
+        
+        setConnectionError(`${missingParams.join(" e ")} não fornecido(s)`);
         setIsConnected(false);
       } else if (!isActive || !useRealSignals) {
         derivAPI.disconnect();
@@ -81,13 +86,13 @@ export const useDerivConnection = (
     return () => {
       derivAPI.disconnect();
     };
-  }, [apiToken, isActive, useRealSignals, tradingSettings.selectedAssets, connectionAttempts]);
+  }, [apiToken, apiId, isActive, useRealSignals, tradingSettings.selectedAssets, connectionAttempts]);
 
   // Auto-reconnect logic
   useEffect(() => {
     let reconnectTimer: number | null = null;
     
-    if (useRealSignals && isActive && !isConnected && apiToken && connectionAttempts < 3) {
+    if (useRealSignals && isActive && !isConnected && apiToken && apiId && connectionAttempts < 3) {
       reconnectTimer = window.setTimeout(() => {
         console.log(`Tentativa de reconexão ${connectionAttempts + 1}/3`);
         setConnectionAttempts(prev => prev + 1);
@@ -99,7 +104,7 @@ export const useDerivConnection = (
         clearTimeout(reconnectTimer);
       }
     };
-  }, [useRealSignals, isActive, isConnected, apiToken, connectionAttempts]);
+  }, [useRealSignals, isActive, isConnected, apiToken, apiId, connectionAttempts]);
 
   // Set up Deriv signal callback
   useEffect(() => {

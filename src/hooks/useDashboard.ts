@@ -45,6 +45,7 @@ export const useDashboard = () => {
   const [isActive, setIsActive] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [apiToken, setApiToken] = useState<string>('');
+  const [apiId, setApiId] = useState<string>('');
   const [useRealSignals, setUseRealSignals] = useState(false);
 
   // Update current time every second
@@ -69,6 +70,7 @@ export const useDashboard = () => {
 
   const { isConnected, connectionError } = useDerivConnection(
     apiToken,
+    apiId,
     isActive,
     useRealSignals,
     tradingSettings,
@@ -117,6 +119,8 @@ export const useDashboard = () => {
     handleToggleActive,
     apiToken,
     setApiToken,
+    apiId,
+    setApiId,
     isConnected,
     useRealSignals,
     setUseRealSignals,

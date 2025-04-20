@@ -7,6 +7,7 @@ import { tradingAssets } from "@/utils/tradingUtils";
 
 class DerivAPI {
   private apiToken: string = '';
+  private apiId: string = '';
   private isAuthorized: boolean = false;
   private subscriptionManager: SubscriptionManager;
   private signalProcessor: SignalProcessor;
@@ -56,14 +57,20 @@ class DerivAPI {
     });
   }
   
-  public authenticate(token: string): void {
+  public authenticate(token: string, apiId: string): void {
     if (!token || token.trim() === '') {
       console.error("Token API vazio ou inválido");
       return;
     }
     
-    console.log("Configurando token API");
+    if (!apiId || apiId.trim() === '') {
+      console.error("API ID vazio ou inválido");
+      return;
+    }
+    
+    console.log("Configurando token API e API ID");
     this.apiToken = token;
+    this.apiId = apiId;
     this.doAuthenticate();
   }
   
@@ -71,6 +78,7 @@ class DerivAPI {
     console.log("Enviando requisição de autenticação");
     wsManager.send({
       authorize: this.apiToken,
+      app_id: this.apiId,
       req_id: 1
     });
   }
