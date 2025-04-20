@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { downloadCSV, isWithinOperatingHours } from "@/utils/tradingUtils";
 import { toast } from "@/components/ui/use-toast";
@@ -43,8 +44,12 @@ export const useDashboard = () => {
     setSignals(prev => [newSignal, ...prev]);
     
     // Enviar para o Telegram automaticamente
-    console.log("Enviando sinal para o Telegram...");
-    telegramService.sendSignal(newSignal);
+    if (telegramSettings.enabled) {
+      console.log("Enviando sinal para o Telegram...");
+      telegramService.sendSignal(newSignal);
+    } else {
+      console.log("Telegram desativado. Sinal não enviado.");
+    }
   };
 
   const { signals, setSignals } = useTradeSignals(
@@ -102,7 +107,9 @@ export const useDashboard = () => {
                 const updatedSignal = { ...s, result };
                 
                 // Enviar resultado para o Telegram automaticamente
-                telegramService.sendResult(updatedSignal);
+                if (telegramSettings.enabled && telegramSettings.sendResultsAutomatically) {
+                  telegramService.sendResult(updatedSignal);
+                }
                 
                 return updatedSignal;
               }
@@ -114,7 +121,7 @@ export const useDashboard = () => {
     }, 30000); // Verificar a cada 30 segundos
     
     return () => clearInterval(resultCheckInterval);
-  }, [isActive, signals, setSignals]);
+  }, [isActive, signals, setSignals, telegramSettings]);
 
   const handleToggleActive = () => {
     setIsActive(!isActive);

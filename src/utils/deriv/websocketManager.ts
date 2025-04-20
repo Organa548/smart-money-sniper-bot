@@ -7,6 +7,7 @@ class WebSocketManager {
   private maxReconnectAttempts: number = 5;
   private lastError: string | null = null;
   private isConnecting: boolean = false;
+  private connectionBlockedByBrowser: boolean = false;
 
   public connect(): Promise<boolean> {
     console.log("WebSocketManager: Iniciando conexão");
@@ -52,8 +53,17 @@ class WebSocketManager {
         }
         
         // Tentando conexão com protocolo wss (WebSocket Secure)
-        this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
-        console.log("Objeto WebSocket criado, aguardando conexão...");
+        try {
+          this.ws = new WebSocket('wss://ws.binaryws.com/websockets/v3');
+          console.log("Objeto WebSocket criado, aguardando conexão...");
+        } catch (wsCreationError) {
+          console.error("Erro ao criar objeto WebSocket:", wsCreationError);
+          this.connectionBlockedByBrowser = true;
+          this.lastError = "Bloqueio de conexão pelo navegador";
+          this.isConnecting = false;
+          resolve(false);
+          return;
+        }
         
         // Timeout reduzido para 10 segundos para evitar esperas muito longas
         this.connectionTimeout = window.setTimeout(() => {
@@ -76,6 +86,7 @@ class WebSocketManager {
           this.startPingInterval();
           this.reconnectAttempts = 0;
           this.lastError = null;
+          this.connectionBlockedByBrowser = false;
           this.isConnecting = false;
           resolve(true);
         };
@@ -83,6 +94,7 @@ class WebSocketManager {
         this.ws.onerror = (error) => {
           console.error('Erro na conexão WebSocket:', error);
           this.lastError = "Bloqueio de conexão pelo navegador ou servidor não disponível";
+          this.connectionBlockedByBrowser = true;
           
           if (this.connectionTimeout) {
             clearTimeout(this.connectionTimeout);
@@ -169,7 +181,11 @@ class WebSocketManager {
     
     if (this.ws) {
       this.ws.onclose = null;
-      this.ws.close();
+      try {
+        this.ws.close();
+      } catch (error) {
+        console.error("Erro ao fechar WebSocket:", error);
+      }
       this.ws = null;
     }
     
@@ -187,6 +203,15 @@ class WebSocketManager {
   
   public getLastError(): string | null {
     return this.lastError;
+  }
+  
+  public isConnectionBlockedByBrowser(): boolean {
+    return this.connectionBlockedByBrowser;
+  }
+  
+  public resetConnectionAttempts(): void {
+    this.reconnectAttempts = 0;
+    this.connectionBlockedByBrowser = false;
   }
 }
 

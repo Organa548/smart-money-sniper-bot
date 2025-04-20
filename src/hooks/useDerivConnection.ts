@@ -46,7 +46,17 @@ export const useDerivConnection = (
           if (token && id) {
             derivAPI.authenticate(token, id);
           } else {
-            console.error("Falha: Token ou ID não disponíveis");
+            const errorMsg = "API Token ou API ID não configurados";
+            console.error("Falha:", errorMsg);
+            setConnectionError(errorMsg);
+            setIsConnected(false);
+            
+            toast({
+              title: "Erro de Conexão",
+              description: errorMsg,
+              variant: "destructive",
+            });
+            return;
           }
           
           const connected = await derivAPI.connect();
@@ -55,6 +65,7 @@ export const useDerivConnection = (
             console.log("Conexão bem-sucedida com a API Deriv");
             setIsConnected(true);
             setConnectionAttempts(0);
+            setConnectionError(null);
             
             // Atualizando assinaturas
             console.log("Atualizando assinaturas para ativos selecionados:", tradingSettings.selectedAssets);
@@ -104,7 +115,7 @@ export const useDerivConnection = (
     
     // Verificação de conexão periódica
     const connectionCheckInterval = setInterval(() => {
-      if (isActive && useRealSignals && !isConnected && connectionAttempts < 5) {
+      if (isActive && useRealSignals && !isConnected && connectionAttempts < 3) {
         console.log("Verificando reconexão automática...");
         connect();
       }
@@ -157,6 +168,17 @@ export const useDerivConnection = (
       derivAPI.setSignalCallback(() => {});
     };
   }, [isActive, operatingNow, tradingSettings.is24HoursMode, onNewSignal]);
+
+  // Mostrar mensagem de ajuda quando houver erro de conexão por bloqueio
+  useEffect(() => {
+    if (connectionError && connectionError.includes("Bloqueio de conexão pelo navegador")) {
+      toast({
+        title: "Conexão Bloqueada",
+        description: "Seu navegador pode estar bloqueando conexões WebSocket. Tente verificar as configurações de segurança ou use outro navegador.",
+        variant: "destructive",
+      });
+    }
+  }, [connectionError]);
 
   return {
     isConnected,

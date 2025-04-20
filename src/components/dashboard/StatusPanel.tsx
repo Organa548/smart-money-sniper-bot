@@ -1,5 +1,6 @@
 
 import React from "react";
+import { AlertCircle } from "lucide-react";
 
 interface StatusPanelProps {
   isActive: boolean;
@@ -51,7 +52,8 @@ const StatusPanel: React.FC<StatusPanelProps> = ({
                 : 'Desativada'}
             </div>
             {useRealSignals && connectionError && !isConnected && (
-              <div className="text-trading-loss text-xs mt-1">
+              <div className="text-trading-loss text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
                 {connectionError}
               </div>
             )}
